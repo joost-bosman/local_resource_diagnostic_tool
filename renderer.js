@@ -20,6 +20,7 @@ const progressText = document.getElementById("progressText");
 const progressFill = document.getElementById("progressFill");
 const resultsBtn = document.getElementById("resultsBtn");
 const resultsStatus = document.getElementById("resultsStatus");
+const closeApp = document.getElementById("closeApp");
 
 let lastResults = null;
 
@@ -214,7 +215,7 @@ async function runDiagnostics() {
     resultsEl.textContent = formatForDisplay(data);
     const suggestions = getSuggestions(data);
     suggestionsList.innerHTML = suggestions.map((item) => `<li>${item}</li>`).join("");
-    timestampEl.textContent = new Date().toLocaleString();
+    if (timestampEl) timestampEl.textContent = new Date().toLocaleString();
     statusEl.textContent = "Diagnostics complete.";
     if (resultsStatus) resultsStatus.textContent = "Complete.";
     exportBtn.disabled = false;
@@ -273,6 +274,12 @@ if (resultsBtn) {
   resultsBtn.addEventListener("click", () => {
     if (!lastResults) return;
     showScreen(screenResults);
+  });
+}
+
+if (closeApp) {
+  closeApp.addEventListener("click", () => {
+    window.close();
   });
 }
 

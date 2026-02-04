@@ -42,11 +42,14 @@ function formatBytes(bytes) {
   return `${value.toFixed(2)} ${units[i]}`;
 }
 
-function ddmmyyStamp(date = new Date()) {
+function timestampStamp(date = new Date()) {
   const dd = String(date.getDate()).padStart(2, "0");
   const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const yy = String(date.getFullYear()).slice(-2);
-  return `${dd}${mm}${yy}`;
+  const yyyy = date.getFullYear();
+  const hh = String(date.getHours()).padStart(2, "0");
+  const min = String(date.getMinutes()).padStart(2, "0");
+  const ss = String(date.getSeconds()).padStart(2, "0");
+  return `${dd}-${mm}-${yyyy}_${hh}-${min}-${ss}`;
 }
 
 function getNetworkIps() {
@@ -543,7 +546,7 @@ ipcMain.handle("run-setup", async (_event, action) => {
 
 ipcMain.handle("export-results", async (event, payload) => {
   const { format, contentText, contentHtml } = payload;
-  const stamp = ddmmyyStamp();
+  const stamp = timestampStamp();
   const defaultName = `results_diagnostic_${stamp}.${format === "pdf" ? "pdf" : "txt"}`;
   const { canceled, filePath } = await dialog.showSaveDialog({
     title: "Save Diagnostics",
