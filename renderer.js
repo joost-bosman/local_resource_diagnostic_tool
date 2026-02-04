@@ -74,6 +74,10 @@ function formatForDisplay(obj) {
       const version = info?.version ? ` (${info.version})` : "";
       return `- ${name}: ok${version}`;
     });
+  const cliMissing = cliEntries.filter(([, info]) => info?.ok === false).map(([name]) => name);
+  if (cliMissing.includes("npm") || cliMissing.includes("node")) {
+    cliLines.push("- note: install Node.js (includes npm) to enable CLI builds.");
+  }
 
   const lines = [
     "OS",
@@ -158,6 +162,9 @@ function getSuggestions(diag) {
     .map(([name]) => name);
   if (missingTools.length) {
     suggestions.push(`Missing CLI tools: ${missingTools.join(", ")}.`);
+    if (missingTools.includes("npm") || missingTools.includes("node")) {
+      suggestions.push("Install Node.js (includes npm) to enable CLI builds.");
+    }
   }
 
   if (Number.isFinite(diag?.memory?.intellijCapMb) || (diag?.memory?.alternativeIdeCaps || []).length > 0) {
