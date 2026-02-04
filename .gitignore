@@ -10,6 +10,12 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# JetBrains
+.idea/
+
+# Lockfiles (generated)
+package-lock.json
+
 # Electron build output (if added later)
 dist/
 out/
