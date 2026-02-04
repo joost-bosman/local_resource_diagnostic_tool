@@ -4,6 +4,9 @@ const os = require("os");
 const https = require("https");
 
 const DEFAULT_TEST_URL = "https://www.google.com/generate_204";
+const windowIcon = process.platform === "darwin"
+  ? path.join(__dirname, "assets", "icon-mac.png")
+  : path.join(__dirname, "assets", "icon-win.png");
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -11,7 +14,9 @@ function createWindow() {
     height: 720,
     minWidth: 860,
     minHeight: 620,
+    title: "Local Resource Diagnostic Tool",
     backgroundColor: "#0f1115",
+    icon: windowIcon,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -206,3 +211,6 @@ app.whenReady().then(createWindow);
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
+
+
+

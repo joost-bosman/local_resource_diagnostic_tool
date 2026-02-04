@@ -38,6 +38,18 @@ body {
   font-size: 30px;
 }
 
+.title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.app-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+}
 .app-header p {
   margin: 0;
   color: var(--muted);
@@ -184,3 +196,4 @@ button:disabled {
     gap: 10px;
   }
 }
+

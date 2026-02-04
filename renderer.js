@@ -10,6 +10,13 @@ const cancelExport = document.getElementById("cancelExport");
 
 let lastResults = null;
 
+const appIcon = document.querySelector(".app-icon");
+if (appIcon && window.diagnostics && window.diagnostics.platform) {
+  const iconFile = window.diagnostics.platform === "darwin" ? "icon-mac.png" : "icon-win.png";
+  appIcon.src = `assets/${iconFile}`;
+}
+
+
 function getSelectedValue(name) {
   const input = document.querySelector(`input[name="${name}"]:checked`);
   return input ? input.value : null;
@@ -86,3 +93,4 @@ exportPdf.addEventListener("click", async () => {
   closeModal();
   await exportResults("pdf");
 });
+

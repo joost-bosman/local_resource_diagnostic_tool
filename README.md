@@ -17,3 +17,16 @@ Small Windows + macOS diagnostics app with privacy controls and export.
 ## Notes
 - Public mode redacts username, hostname, and home paths.
 - Internet check measures request latency to a public endpoint.
+
+## Build
+- 
+pm run pack (folder build)
+- 
+pm run build (installer)
+
+
+- Windows 98 icon source: http://toastytech.com/guis/win98.html
+
+
+- Apple image source: https://www.aicerts.ai/news/apple-ai-strategy-the-invisible-approach-wall-street-is-questioning/
+
