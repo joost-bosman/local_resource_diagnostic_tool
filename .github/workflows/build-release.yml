@@ -42,12 +42,16 @@ jobs:
             dist/*.blockmap
 
       - name: Notarize (placeholder)
-        if: runner.os == 'macOS' && secrets.APPLE_ID != ''
+        if: runner.os == 'macOS'
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          if [ -z "$APPLE_ID" ]; then
+            echo "Notarization skipped (APPLE_ID not set)."
+            exit 0
+          fi
           echo "Notarization placeholder. Configure signing and notarization steps here."
 
   release:
