@@ -34,6 +34,10 @@
 - Optional: installed IDEs, tools, and languages
 - Optional: network details and power plan (extensive mode)
 
+### Language support
+- UI and reports are multi-language.
+- Auto-detect uses IP region; English (UK) is the default fallback.
+
 ### Suggestions logic
 - Brief mode: focuses on readiness to start working.
 - Extensive mode: focuses on performance and efficiency gains.
@@ -52,6 +56,10 @@
 - Add a short "first run" guide in the README.
 - Offer both portable and installer options when possible.
 - Publish hashes for integrity checks.
+
+### Build output folders
+- Windows output: dist/windows/
+- macOS output: dist/macos/
 
 ---
 

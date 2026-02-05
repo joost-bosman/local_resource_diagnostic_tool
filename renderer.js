@@ -2130,6 +2130,13 @@ function setLanguage(code, persist = true) {
     localStorage.setItem(LANG_STORAGE_KEY, next);
   }
   applyTranslations();
+  if (lastResults) {
+    resultsEl.textContent = formatForDisplay(lastResults, lastOptions?.approach);
+    const suggestions = lastOptions?.includeOptimization
+      ? getSuggestions(lastResults, lastOptions?.approach)
+      : [t("note.optimization.disabled")];
+    suggestionsList.innerHTML = suggestions.map((item) => `<li>${item}</li>`).join("");
+  }
 }
 
 function mapCountryToLanguage(countryCode) {
@@ -2269,9 +2276,9 @@ function formatForDisplay(obj, approach = "extensive") {
       `- ${t("brief.ram")}: ${formatValue(obj?.memory?.total)} ${t("label.total")}, ${formatValue(obj?.memory?.free)} ${t("label.free")}`,
       `- ${t("brief.gpu")}: ${formatValue(obj?.gpu?.vendor)} ${formatValue(obj?.gpu?.chip)}`,
       `- ${t("brief.internet")}: ${internetSummary}`,
-      cliOk ? `- ${t("brief.cli")}: ${cliOk} ${t("label.installed") || "installed"}` : `- ${t("brief.cli")}: ${t("note.na")}`,
-      softwarePresent ? `- ${t("brief.software")}: ${softwarePresent} ${t("label.installed") || "installed"}` : `- ${t("brief.software")}: ${t("note.na")}`,
-      dependencyPresent ? `- ${t("brief.dependencies")}: ${dependencyPresent} ${t("label.installed") || "installed"}` : `- ${t("brief.dependencies")}: ${t("note.na")}`,
+      cliOk ? `- ${t("brief.cli")}: ${cliOk}` : `- ${t("brief.cli")}: ${t("note.na")}`,
+      softwarePresent ? `- ${t("brief.software")}: ${softwarePresent}` : `- ${t("brief.software")}: ${t("note.na")}`,
+      dependencyPresent ? `- ${t("brief.dependencies")}: ${dependencyPresent}` : `- ${t("brief.dependencies")}: ${t("note.na")}`,
       missingEssentials.length
         ? `- ${t("brief.missing")}: ${missingEssentials.join(", ")}`
         : `- ${t("brief.missing")}: ${t("note.missing.none")}`
@@ -2323,7 +2330,7 @@ function formatForDisplay(obj, approach = "extensive") {
     `- ${t("label.download")}: ${toMBps(obj?.internet?.downloadMbps)} MB/s`,
     `- ${t("label.upload")}: ${toMBps(obj?.internet?.uploadMbps)} MB/s`,
     `- ${t("label.ping")}: ${formatValue(obj?.internet?.pingMs)} ms`,
-    `- ${t("label.status")}: ${formatValue(obj?.internet?.ok ? "ok" : obj?.internet?.error || t("note.na"))}`,
+    `- ${t("label.status")}: ${formatValue(obj?.internet?.ok ? t("label.ok") : obj?.internet?.error || t("note.na"))}`,
     ...(obj?.network
       ? [
           "",

@@ -27,6 +27,9 @@ Based on the results, it provides suggestions to enhance PC/laptop experience an
 - Optimization checks
   - Hardware (always)
   - Software (only when selected)
+- Multi-language UI
+  - Language selection on first launch
+  - Auto-detect by region with English (UK) fallback
 - Test mode
   - Brief  
     Short testing, quick overview of components, plus focused suggestions for weak spots and dependencies.
@@ -53,6 +56,10 @@ npm run build
 macOS helper:
 - `./mac_diagtool_program_builder.sh`
 - Note: I made an auto builder for macOS, but I could not build it myself.
+
+Docs:
+- Explained guide: `docs/EXPLAINED.md`
+- PDF export: `npm run docs:pdf` -> `docs/EXPLAINED.pdf`
 
 ## Where the executables are
 - Output folders:
