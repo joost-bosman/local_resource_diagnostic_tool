@@ -17,7 +17,7 @@ function createWindow() {
     height,
     minWidth: 860,
     minHeight: 620,
-    title: "Local Resource Diagnostic Tool",
+    title: "Developer Diagnostics Kit",
     backgroundColor: "#0f1115",
     icon: windowIcon,
     webPreferences: {
@@ -101,6 +101,114 @@ function runPowerShellJson(script) {
       }
     );
   });
+}
+
+function parseKeyValueLines(text) {
+  if (!text) return null;
+  const lines = String(text).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const data = {};
+  lines.forEach((line) => {
+    const match = line.match(/^([^:]+):\s*(.*)$/);
+    if (!match) return;
+    const key = match[1].trim().toLowerCase();
+    const value = match[2].trim();
+    data[key] = value;
+  });
+  return Object.keys(data).length ? data : null;
+}
+
+async function getWindowsNetworkAdapters() {
+  const script = `
+    $adapters = Get-NetAdapter | Select-Object Name, Status, LinkSpeed, InterfaceDescription;
+    $ipconfig = Get-NetIPConfiguration | Select-Object InterfaceAlias, IPv4Address, IPv4DefaultGateway, DNSServer;
+    [pscustomobject]@{ adapters = $adapters; ipconfig = $ipconfig } | ConvertTo-Json -Depth 4
+  `;
+  const data = await runPowerShellJson(script);
+  if (!data) return null;
+  return data;
+}
+
+async function getWindowsWifiInfo() {
+  const res = await runCommand("netsh", ["wlan", "show", "interfaces"]);
+  if (!res.ok) return null;
+  const parsed = parseKeyValueLines(res.output);
+  if (!parsed) return null;
+  return {
+    ssid: parsed.ssid || null,
+    state: parsed.state || null,
+    signal: parsed.signal || null,
+    radio: parsed["radio type"] || null
+  };
+}
+
+async function getWindowsPowerPlan() {
+  const res = await runCommand("powercfg", ["/getactivescheme"]);
+  if (!res.ok) return null;
+  const match = res.output.match(/\(([^)]+)\)\s*$/);
+  return match ? match[1] : res.output.trim();
+}
+
+async function getWindowsDefaultGateway() {
+  const script = `
+    Get-NetRoute -DestinationPrefix "0.0.0.0/0" |
+      Sort-Object RouteMetric |
+      Select-Object -First 1 NextHop |
+      ConvertTo-Json
+  `;
+  const data = await runPowerShellJson(script);
+  if (!data) return null;
+  if (typeof data === "string") return data;
+  return data.NextHop || data.nextHop || null;
+}
+
+async function getMacWifiInfo() {
+  const airportPath = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport";
+  if (!fs.existsSync(airportPath)) return null;
+  const res = await runCommand(airportPath, ["-I"]);
+  if (!res.ok) return null;
+  const parsed = parseKeyValueLines(res.output);
+  if (!parsed) return null;
+  return {
+    ssid: parsed.ssid || null,
+    state: parsed.state || null,
+    signal: parsed["agrctlrssi"] || null,
+    noise: parsed["agrctlnoise"] || null,
+    rate: parsed["lasttxrate"] || null
+  };
+}
+
+async function getMacNetworkPorts() {
+  const res = await runCommand("networksetup", ["-listallhardwareports"]);
+  if (!res.ok) return null;
+  const blocks = res.output.split(/\r?\n\r?\n/);
+  const ports = [];
+  blocks.forEach((block) => {
+    const port = {};
+    block.split(/\r?\n/).forEach((line) => {
+      const match = line.match(/^([^:]+):\s*(.*)$/);
+      if (!match) return;
+      const key = match[1].trim();
+      const value = match[2].trim();
+      if (key === "Hardware Port") port.name = value;
+      if (key === "Device") port.device = value;
+    });
+    if (port.name || port.device) ports.push(port);
+  });
+  return ports.length ? ports : null;
+}
+
+async function getMacPowerSummary() {
+  const res = await runCommand("pmset", ["-g"]);
+  if (!res.ok) return null;
+  const lines = res.output.split(/\r?\n/).filter(Boolean).slice(0, 3);
+  return lines.join(" | ");
+}
+
+async function getMacDefaultGateway() {
+  const res = await runCommand("route", ["-n", "get", "default"]);
+  if (!res.ok) return null;
+  const match = res.output.match(/gateway:\s+([^\s]+)/);
+  return match ? match[1] : null;
 }
 
 async function getWindowsCpuDetails() {
@@ -399,7 +507,8 @@ function checkMacOsUpdates() {
 
 async function collectDiagnostics(options) {
   const mode = options?.mode || "quick";
-  const privacy = options?.privacy || "private";
+  const approach = options?.approach || "brief";
+  const isExtensive = approach === "extensive";
   const cpuInfo = os.cpus();
   const gpuInfo = await app.getGPUInfo("complete").catch(() => ({}));
   const macUpdate =
@@ -478,13 +587,14 @@ async function collectDiagnostics(options) {
   diag.gpu = {
     vendor: windowsGpu?.vendor || detectGpuVendor(summarizeGpu(gpuInfo).name)?.name || null,
     chip: windowsGpu?.chip || summarizeGpu(gpuInfo).name || null,
+    driverVersion: windowsGpu?.driverVersion || null,
     cores: null,
     speedMHz: null,
     speedGHz: null,
     voltage: null
   };
 
-  if (mode === "full") {
+  if (mode === "full" || approach === "extensive") {
     diag.process = {
       nodeVersion: process.version,
       platform: process.platform
@@ -495,33 +605,70 @@ async function collectDiagnostics(options) {
   diag.software = software;
   diag.dependencies = dependencies;
 
-  const speedtest = await runSpeedtestNet().catch((err) => ({
-    ok: false,
-    error: err.message || String(err)
-  }));
-  diag.internet = {
-    testUrl: "https://www.speedtest.net/",
-    ok: speedtest.ok,
-    downloadMbps: speedtest.downloadMbps || null,
-    uploadMbps: speedtest.uploadMbps || null,
-    pingMs: speedtest.pingMs || null,
-    error: speedtest.error || null
-  };
+  const shouldRunSpeedtest = isExtensive || mode === "full";
+  if (shouldRunSpeedtest) {
+    const speedtest = await runSpeedtestNet().catch((err) => ({
+      ok: false,
+      error: err.message || String(err)
+    }));
+    diag.internet = {
+      testUrl: "https://www.speedtest.net/",
+      ok: speedtest.ok,
+      downloadMbps: speedtest.downloadMbps || null,
+      uploadMbps: speedtest.uploadMbps || null,
+      pingMs: speedtest.pingMs || null,
+      error: speedtest.error || null
+    };
+  } else {
+    diag.internet = {
+      testUrl: "https://www.speedtest.net/",
+      ok: null,
+      downloadMbps: null,
+      uploadMbps: null,
+      pingMs: null,
+      error: "Skipped in brief mode"
+    };
+  }
 
-  if (privacy === "public") {
-    const redactions = [
-      os.userInfo().username,
-      os.hostname(),
-      os.homedir(),
-      process.env.USERPROFILE,
-      process.env.HOME
-    ].filter(Boolean);
-    const redacted = redactObject(diag, redactions);
-    if (redacted.os) {
-      redacted.os.hostname = "[redacted]";
-      redacted.os.ip = Array.isArray(redacted.os.ip) ? redacted.os.ip.map(() => "[redacted]") : "[redacted]";
-    }
-    return redacted;
+  if (isExtensive) {
+    const [wifiInfo, powerPlan, gateway, macPorts, winAdapters] = await Promise.all([
+      process.platform === "darwin" ? getMacWifiInfo() : getWindowsWifiInfo(),
+      process.platform === "darwin" ? getMacPowerSummary() : getWindowsPowerPlan(),
+      process.platform === "darwin" ? getMacDefaultGateway() : getWindowsDefaultGateway(),
+      process.platform === "darwin" ? getMacNetworkPorts() : Promise.resolve(null),
+      process.platform === "win32" ? getWindowsNetworkAdapters() : Promise.resolve(null)
+    ]);
+
+    const lanStatus = (() => {
+      if (process.platform === "win32" && winAdapters?.adapters) {
+        const list = Array.isArray(winAdapters.adapters) ? winAdapters.adapters : [winAdapters.adapters];
+        const lan = list.find((item) => /ethernet|lan/i.test(item.Name || item.InterfaceDescription || ""));
+        return lan
+          ? { status: lan.Status || "n/a", speed: lan.LinkSpeed || "n/a" }
+          : { status: "n/a", speed: "n/a" };
+      }
+      if (process.platform === "darwin" && Array.isArray(macPorts)) {
+        const lan = macPorts.find((item) => /ethernet/i.test(item.name || ""));
+        return lan ? { status: "available", speed: "n/a" } : { status: "n/a", speed: "n/a" };
+      }
+      return { status: "n/a", speed: "n/a" };
+    })();
+
+    diag.network = {
+      wifi: wifiInfo || null,
+      lan: lanStatus,
+      adapters: winAdapters?.adapters || macPorts || null,
+      ipconfig: winAdapters?.ipconfig || null,
+      router: {
+        gateway: gateway || "n/a",
+        firmware: "not available"
+      }
+    };
+
+    diag.systemSettings = {
+      powerPlan: powerPlan || null,
+      powerSummary: powerPlan || null
+    };
   }
 
   return diag;

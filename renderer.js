@@ -13,6 +13,7 @@ const setupInstall = document.getElementById("setupInstall");
 const setupStart = document.getElementById("setupStart");
 const setupStatus = document.getElementById("setupStatus");
 const platformBadge = document.getElementById("platformBadge");
+const screenLanguage = document.getElementById("screenLanguage");
 const screenStart = document.getElementById("screenStart");
 const screenProgress = document.getElementById("screenProgress");
 const screenResults = document.getElementById("screenResults");
@@ -20,18 +21,2174 @@ const progressText = document.getElementById("progressText");
 const progressFill = document.getElementById("progressFill");
 const resultsStatus = document.getElementById("resultsStatus");
 const closeApp = document.getElementById("closeApp");
+const previousBtn = document.getElementById("previousBtn");
+const languageContinue = document.getElementById("languageContinue");
+const detectLanguageBtn = document.getElementById("detectLanguageBtn");
+const languageStatus = document.getElementById("languageStatus");
 
 let lastResults = null;
 let lastOptions = null;
+
+// Language setup for UI + report text.
+const LANG_STORAGE_KEY = "ddk.language";
+const DEFAULT_LANG = "en-GB";
+const LANGUAGE_LABEL_KEYS = {
+  "en-GB": "language.label.enGB",
+  nl: "language.label.nl",
+  hi: "language.label.hi",
+  ar: "language.label.ar",
+  pl: "language.label.pl",
+  uk: "language.label.uk",
+  fr: "language.label.fr",
+  pt: "language.label.pt",
+  es: "language.label.es",
+  it: "language.label.it",
+  id: "language.label.id"
+};
+const LANGUAGES = {
+  "en-GB": {
+    dir: "ltr",
+    strings: {
+      "app.title": "Developer Diagnostics Kit",
+      "app.badge": "Windows + macOS",
+      "platform.windows": "Windows",
+      "platform.macos": "macOS",
+      "language.title": "Choose language",
+      "language.subtitle": "We can auto-detect based on your region.",
+      "language.auto": "Auto-detect language",
+      "language.manual": "Or select manually",
+      "language.continue": "Continue",
+      "language.status.idle": "Waiting.",
+      "language.status.detecting": "Detecting language...",
+      "language.status.detected": "Detected: {language}.",
+      "language.status.failed": "Could not detect language.",
+      "language.label.enGB": "English (UK)",
+      "language.label.nl": "Nederlands",
+      "language.label.hi": "ÃƒÂ Ã‚Â¤Ã‚Â¹ÃƒÂ Ã‚Â¤Ã‚Â¿ÃƒÂ Ã‚Â¤Ã‚Â¨ÃƒÂ Ã‚Â¥Ã‚ÂÃƒÂ Ã‚Â¤Ã‚Â¦ÃƒÂ Ã‚Â¥Ã¢â€šÂ¬",
+      "language.label.ar": "ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â±ÃƒËœÃ‚Â¨Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â©",
+      "language.label.pl": "Polski",
+      "language.label.uk": "ÃƒÂÃ‚Â£ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬â€ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°",
+      "language.label.fr": "FranÃƒÆ’Ã‚Â§ais",
+      "language.label.pt": "PortuguÃƒÆ’Ã‚Âªs",
+      "language.label.es": "EspaÃƒÆ’Ã‚Â±ol",
+      "language.label.it": "Italiano",
+      "language.label.id": "Bahasa Indonesia",
+      "setup.title": "Setup",
+      "setup.note": "Installs the dev dependencies from the project and starts the dev app. This is needed only if you run from source.",
+      "setup.list.install": "Will run: npm install",
+      "setup.list.start": "Will run: npm start",
+      "setup.install": "Install dependencies",
+      "setup.start": "Start app",
+      "setup.status.waiting": "Waiting.",
+      "setup.status.installing": "Installing...",
+      "setup.status.starting": "Starting...",
+      "setup.status.done": "Done.",
+      "mode.title": "Test mode",
+      "mode.brief": "Brief",
+      "mode.extensive": "Extensive",
+      "extras.title": "Extras",
+      "extras.software": "Software/IDEs",
+      "extras.dependencies": "Tools & Languages",
+      "extras.optimization": "Include optimization checks",
+      "actions.run": "Run diagnostics",
+      "status.ready": "Ready.",
+      "status.running": "Running {mode} diagnostics...",
+      "status.complete": "{mode} diagnostics complete.",
+      "status.failed": "Diagnostics failed.",
+      "status.wrapping": "Wrapping up...",
+      "status.exporting": "Saving {format}...",
+      "status.export.complete": "Export complete.",
+      "status.export.canceled": "Export canceled.",
+      "status.export.failed": "Export failed.",
+      "progress.title": "Running diagnostics...",
+      "progress.preparing": "Preparing checks.",
+      "progress.running": "Running {mode} checks...",
+      "results.button": "Results",
+      "results.title": "Results",
+      "results.placeholder": "Run diagnostics to see results.",
+      "export.title": "Export results",
+      "export.button": "Export results",
+      "export.previous": "Previous",
+      "results.status.ready": "Ready.",
+      "results.status.running": "Running...",
+      "results.status.complete": "Complete.",
+      "results.status.failed": "Failed.",
+      "suggestions.title": "Optimization suggestions",
+      "suggestions.placeholder": "Run diagnostics to see suggestions.",
+      "actions.close": "Close application",
+      "modal.title": "Export results",
+      "modal.subtitle": "Choose a format:",
+      "modal.cancel": "Cancel",
+      "results.brief.title": "Brief overview",
+      "results.extensive.title": "Extensive diagnostics",
+      "section.os": "OS",
+      "section.cpu": "CPU (Processor)",
+      "section.ram": "RAM Modules",
+      "section.gpu": "GPU (Videocard)",
+      "section.internet": "Internet",
+      "section.network": "Network",
+      "section.system": "System settings",
+      "section.process": "Process",
+      "section.app": "App",
+      "section.work": "Work readiness",
+      "section.cli": "CLI Tools",
+      "section.software": "Software/IDEs installed",
+      "section.dependencies": "Tools & Languages",
+      "label.version": "version",
+      "label.release": "release",
+      "label.arch": "arch",
+      "label.hostname": "hostname",
+      "label.ip": "ip",
+      "label.updateStatus": "update status",
+      "label.vendor": "vendor",
+      "label.model": "model",
+      "label.cores": "cores",
+      "label.ok": "ok",
+      "label.installed": "installed",
+      "label.totalSpeed": "total speed",
+      "label.voltage": "voltage",
+      "label.loadAvg": "load avg",
+      "label.total": "total",
+      "label.used": "used",
+      "label.free": "free",
+      "label.intellijCap": "IntelliJ cap",
+      "label.altIdeCaps": "Alt IDE caps",
+      "label.driver": "driver",
+      "label.speed": "speed",
+      "label.test": "test",
+      "label.download": "download",
+      "label.upload": "upload",
+      "label.ping": "ping",
+      "label.status": "status",
+      "label.gateway": "gateway",
+      "label.routerFirmware": "router firmware",
+      "label.wifi": "wifi",
+      "label.signal": "signal",
+      "label.lan": "lan",
+      "label.power": "power",
+      "label.name": "name",
+      "label.electron": "electron",
+      "label.node": "node",
+      "label.chrome": "chrome",
+      "label.javaHome": "java home",
+      "label.platform": "platform",
+      "label.missingEssentials": "missing essentials",
+      "brief.os": "OS",
+      "brief.arch": "arch",
+      "brief.cpu": "CPU",
+      "brief.ram": "RAM",
+      "brief.gpu": "GPU",
+      "brief.internet": "Internet",
+      "brief.cli": "CLI tools",
+      "brief.software": "Software/IDEs",
+      "brief.dependencies": "Tools & Languages",
+      "brief.missing": "Missing essentials",
+      "note.skipped": "skipped (run extensive for speed test)",
+      "note.optimization.disabled": "Optimization checks disabled.",
+      "note.noDiagnostics": "No diagnostics available.",
+      "note.noIssues": "No immediate issues found. System looks healthy.",
+      "note.potential": "Potential improvement (estimate): {min}-{max}%.",
+      "note.missing.none": "none",
+      "note.na": "n/a",
+      "section.suggestions": "Suggestions",
+      "suggest.checklist.brief": "Start working checklist: confirm essential tools are installed and builds run.",
+      "suggest.checklist.extensive": "Max performance checklist: focus on steps that improve speed and efficiency.",
+      "suggest.memory.low": "Low free memory: close unused apps or restart to free RAM.",
+      "suggest.memory.veryHigh": "RAM use >= 90%: close heavy apps, pause builds, or increase system RAM.",
+      "suggest.memory.high": "RAM use >= 80%: consider closing apps or increasing RAM if this is common.",
+      "suggest.memory.reserve": "Keep 20% free RAM for cache and OS tasks; 10% is the minimum to avoid slowdowns.",
+      "suggest.cpu.high": "High CPU load: check Task Manager for heavy processes.",
+      "suggest.internet.failed": "Internet check failed: verify your connection or firewall.",
+      "suggest.internet.latency": "High internet latency: try switching networks or restarting the router.",
+      "suggest.os.updates": "macOS updates available: install the latest updates.",
+      "suggest.gpu.full": "Run full diagnostics to include GPU and process details.",
+      "suggest.ide.cap": "JetBrains IDE cap detected: increase IDE heap size if performance is slow.",
+      "suggest.wifi.weak": "Weak Wi-Fi signal (<60%): move closer to the router or switch to Ethernet.",
+      "suggest.wifi.weakRssi": "Weak Wi-Fi signal (low RSSI): move closer to the router or switch to Ethernet.",
+      "suggest.power.plan": "Power plan is not set to high performance: switch to Best/High Performance while coding or building.",
+      "suggest.vscode.extensions": "VS Code: disable unused extensions and exclude build/output folders from file watching and search.",
+      "suggest.jetbrains.tune": "JetBrains IDEs: disable unused plugins, exclude build output from indexing, and raise heap size if needed.",
+      "suggest.vs.parallel": "Visual Studio: enable parallel project builds and unload unused projects to reduce solution load time.",
+      "suggest.xcode.derived": "Xcode: clean DerivedData when indexing or build times spike.",
+      "suggest.android.accel": "Android Studio: enable emulator hardware acceleration and keep the Gradle cache on fast storage.",
+      "suggest.node.lts": "Node.js: use the latest LTS release and keep project dependencies on SSD storage.",
+      "suggest.ts.incremental": "TypeScript: enable incremental builds or project references for large codebases.",
+      "suggest.python.venv": "Python: use virtual environments to keep installs isolated and fast.",
+      "suggest.java.lts": "Java: use a current LTS JDK and enable build caches (Gradle/Maven) for faster rebuilds.",
+      "suggest.docker.windows": "Docker Desktop (Windows): use WSL2 backend and tune CPU/RAM limits for your workload.",
+      "suggest.docker.mac": "Docker Desktop (macOS): tune CPU/RAM limits and file sharing (VirtioFS if available).",
+      "checklist.osDrivers": "Update OS and device drivers (GPU, chipset, Wi-Fi/LAN) to the latest stable versions.",
+      "checklist.powerPlan": "Use a High Performance/Best Performance power plan while coding or building.",
+      "checklist.startupApps": "Disable or trim startup apps and background services you do not use.",
+      "checklist.diskSpace": "Keep at least 20% free disk space; run disk cleanup and remove large temp files.",
+      "checklist.ssd": "Prefer SSD storage for projects; avoid heavy builds on slow external drives.",
+      "checklist.visualEffects": "Reduce visual effects/animations for snappier UI.",
+      "checklist.antivirus": "Exclude project folders (node_modules, build, dist) from real-time antivirus scanning.",
+      "checklist.wifi": "Use Ethernet or strong 5GHz Wi-Fi; update router firmware and reboot periodically.",
+      "checklist.dns": "Set DNS to a fast provider and verify low latency for package downloads.",
+      "checklist.browser": "Limit browser tabs and close heavy apps during builds.",
+      "checklist.hwAccel": "Enable hardware acceleration where supported (browser/IDE).",
+      "checklist.cliTools": "Keep CLI tools up to date (Node.js, npm, Git, Docker, Java).",
+      "checklist.reboot": "Reboot after major updates to clear stale processes and locks."
+    }
+  },
+  nl: {
+    dir: "ltr",
+    strings: {
+      "app.title": "Developer Diagnostics Kit",
+      "app.badge": "Windows + macOS",
+      "platform.windows": "Windows",
+      "platform.macos": "macOS",
+      "language.title": "Kies taal",
+      "language.subtitle": "We kunnen automatisch detecteren op basis van je regio.",
+      "language.auto": "Taal automatisch detecteren",
+      "language.manual": "Of handmatig kiezen",
+      "language.continue": "Doorgaan",
+      "language.status.idle": "Wachten.",
+      "language.status.detecting": "Taal wordt gedetecteerd...",
+      "language.status.detected": "Gedetecteerd: {language}.",
+      "language.status.failed": "Kon taal niet detecteren.",
+      "language.label.enGB": "Engels (VK)",
+      "language.label.nl": "Nederlands",
+      "language.label.hi": "ÃƒÂ Ã‚Â¤Ã‚Â¹ÃƒÂ Ã‚Â¤Ã‚Â¿ÃƒÂ Ã‚Â¤Ã‚Â¨ÃƒÂ Ã‚Â¥Ã‚ÂÃƒÂ Ã‚Â¤Ã‚Â¦ÃƒÂ Ã‚Â¥Ã¢â€šÂ¬",
+      "language.label.ar": "ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â±ÃƒËœÃ‚Â¨Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â©",
+      "language.label.pl": "Polski",
+      "language.label.uk": "ÃƒÂÃ‚Â£ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬â€ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°",
+      "language.label.fr": "FranÃƒÆ’Ã‚Â§ais",
+      "language.label.pt": "PortuguÃƒÆ’Ã‚Âªs",
+      "language.label.es": "EspaÃƒÆ’Ã‚Â±ol",
+      "language.label.it": "Italiano",
+      "language.label.id": "Bahasa Indonesia",
+      "setup.title": "Installatie",
+      "setup.note": "Installeert de dev-afhankelijkheden van het project en start de dev-app. Alleen nodig als je vanuit de bron draait.",
+      "setup.list.install": "Zal uitvoeren: npm install",
+      "setup.list.start": "Zal uitvoeren: npm start",
+      "setup.install": "Afhankelijkheden installeren",
+      "setup.start": "App starten",
+      "setup.status.waiting": "Wachten.",
+      "setup.status.installing": "Installeren...",
+      "setup.status.starting": "Starten...",
+      "setup.status.done": "Klaar.",
+      "mode.title": "Testmodus",
+      "mode.brief": "Kort",
+      "mode.extensive": "Uitgebreid",
+      "extras.title": "Extra's",
+      "extras.software": "Software/IDEs",
+      "extras.dependencies": "Tools & talen",
+      "extras.optimization": "Optimalisatiechecks opnemen",
+      "actions.run": "Diagnose uitvoeren",
+      "status.ready": "Gereed.",
+      "status.running": "{mode} diagnose uitvoeren...",
+      "status.complete": "{mode} diagnose voltooid.",
+      "status.failed": "Diagnose mislukt.",
+      "status.wrapping": "Afronden...",
+      "status.exporting": "{format} opslaan...",
+      "status.export.complete": "Export voltooid.",
+      "status.export.canceled": "Export geannuleerd.",
+      "status.export.failed": "Export mislukt.",
+      "progress.title": "Diagnose uitvoeren...",
+      "progress.preparing": "Controles voorbereiden.",
+      "progress.running": "{mode} controles uitvoeren...",
+      "results.button": "Resultaten",
+      "results.title": "Resultaten",
+      "results.placeholder": "Voer diagnose uit om resultaten te zien.",
+      "export.title": "Resultaten exporteren",
+      "export.button": "Resultaten exporteren",
+      "export.previous": "Vorige",
+      "results.status.ready": "Gereed.",
+      "results.status.running": "Bezig...",
+      "results.status.complete": "Voltooid.",
+      "results.status.failed": "Mislukt.",
+      "suggestions.title": "Optimalisatiesuggesties",
+      "suggestions.placeholder": "Voer diagnose uit om suggesties te zien.",
+      "actions.close": "Applicatie sluiten",
+      "modal.title": "Resultaten exporteren",
+      "modal.subtitle": "Kies een formaat:",
+      "modal.cancel": "Annuleren",
+      "results.brief.title": "Korte samenvatting",
+      "results.extensive.title": "Uitgebreide diagnose",
+      "section.os": "Besturingssysteem",
+      "section.cpu": "CPU (Processor)",
+      "section.ram": "RAM-modules",
+      "section.gpu": "GPU (Videokaart)",
+      "section.internet": "Internet",
+      "section.network": "Netwerk",
+      "section.system": "Systeeminstellingen",
+      "section.process": "Proces",
+      "section.app": "App",
+      "section.work": "Werkbaarheid",
+      "section.cli": "CLI-tools",
+      "section.software": "Software/IDEs geÃƒÆ’Ã‚Â¯nstalleerd",
+      "section.dependencies": "Tools & talen",
+      "section.suggestions": "Suggesties",
+      "label.version": "versie",
+      "label.release": "release",
+      "label.arch": "architectuur",
+      "label.hostname": "hostnaam",
+      "label.ip": "ip",
+      "label.updateStatus": "update status",
+      "label.vendor": "leverancier",
+      "label.model": "model",
+      "label.cores": "cores",
+      "label.installed": "geÃƒÆ’Ã‚Â¯nstalleerd",
+      "label.totalSpeed": "totale snelheid",
+      "label.voltage": "spanning",
+      "label.loadAvg": "gem. belasting",
+      "label.total": "totaal",
+      "label.used": "gebruikt",
+      "label.free": "vrij",
+      "label.intellijCap": "IntelliJ-cap",
+      "label.altIdeCaps": "Alternatieve IDE-caps",
+      "label.driver": "driver",
+      "label.speed": "snelheid",
+      "label.test": "test",
+      "label.download": "download",
+      "label.upload": "upload",
+      "label.ping": "ping",
+      "label.status": "status",
+      "label.gateway": "gateway",
+      "label.routerFirmware": "routerfirmware",
+      "label.wifi": "wifi",
+      "label.signal": "signaal",
+      "label.lan": "lan",
+      "label.power": "energie",
+      "label.name": "naam",
+      "label.electron": "electron",
+      "label.node": "node",
+      "label.chrome": "chrome",
+      "label.javaHome": "java home",
+      "label.platform": "platform",
+      "label.missingEssentials": "ontbrekende essentials",
+      "brief.os": "OS",
+      "brief.arch": "arch",
+      "brief.cpu": "CPU",
+      "brief.ram": "RAM",
+      "brief.gpu": "GPU",
+      "brief.internet": "Internet",
+      "brief.cli": "CLI-tools",
+      "brief.software": "Software/IDEs",
+      "brief.dependencies": "Tools & talen",
+      "brief.missing": "Ontbrekende essentials",
+      "note.skipped": "overgeslagen (uitgebreid uitvoeren voor snelheidstest)",
+      "note.optimization.disabled": "Optimalisatiechecks uitgeschakeld.",
+      "note.noDiagnostics": "Geen diagnose beschikbaar.",
+      "note.noIssues": "Geen directe problemen gevonden. Systeem ziet er gezond uit.",
+      "note.potential": "PotentiÃƒÆ’Ã‚Â«le verbetering (schatting): {min}-{max}%.",
+      "note.missing.none": "geen",
+      "note.na": "n.v.t.",
+      "suggest.checklist.brief": "Start checklist: controleer of essentiÃƒÆ’Ã‚Â«le tools zijn geÃƒÆ’Ã‚Â¯nstalleerd en builds draaien.",
+      "suggest.checklist.extensive": "Max performance checklist: focus op stappen die snelheid en efficiÃƒÆ’Ã‚Â«ntie verbeteren.",
+      "suggest.memory.low": "Weinig vrij geheugen: sluit ongebruikte apps of herstart om RAM vrij te maken.",
+      "suggest.memory.veryHigh": "RAM-gebruik >= 90%: sluit zware apps, pauzeer builds of verhoog RAM.",
+      "suggest.memory.high": "RAM-gebruik >= 80%: overweeg apps te sluiten of RAM te verhogen als dit vaak voorkomt.",
+      "suggest.memory.reserve": "Houd 20% RAM vrij voor cache en OS-taken; 10% is het minimum om vertraging te voorkomen.",
+      "suggest.cpu.high": "Hoge CPU-belasting: controleer Taakbeheer op zware processen.",
+      "suggest.internet.failed": "Internetcheck mislukt: controleer je verbinding of firewall.",
+      "suggest.internet.latency": "Hoge internetlatentie: probeer netwerk te wisselen of herstart de router.",
+      "suggest.os.updates": "macOS-updates beschikbaar: installeer de nieuwste updates.",
+      "suggest.gpu.full": "Voer volledige diagnose uit om GPU- en procesdetails mee te nemen.",
+      "suggest.ide.cap": "JetBrains IDE-cap gedetecteerd: verhoog de IDE-heapgrootte bij trage prestaties.",
+      "suggest.wifi.weak": "Zwak wifi-signaal (<60%): ga dichter bij de router staan of gebruik Ethernet.",
+      "suggest.wifi.weakRssi": "Zwak wifi-signaal (lage RSSI): ga dichter bij de router staan of gebruik Ethernet.",
+      "suggest.power.plan": "Energieplan staat niet op hoge prestaties: schakel naar Hoogste/Best Performance tijdens coderen of bouwen.",
+      "suggest.vscode.extensions": "VS Code: schakel ongebruikte extensies uit en sluit build/output-mappen uit van bestandswatching en zoeken.",
+      "suggest.jetbrains.tune": "JetBrains IDE's: schakel ongebruikte plugins uit, sluit build-output uit van indexering en verhoog heap indien nodig.",
+      "suggest.vs.parallel": "Visual Studio: schakel parallel bouwen in en ontlaad ongebruikte projecten om laadtijd te verminderen.",
+      "suggest.xcode.derived": "Xcode: ruim DerivedData op bij trage indexering of builds.",
+      "suggest.android.accel": "Android Studio: schakel hardwareversnelling voor emulatoren in en houd de Gradle-cache op snelle opslag.",
+      "suggest.node.lts": "Node.js: gebruik de nieuwste LTS-release en bewaar projectafhankelijkheden op SSD.",
+      "suggest.ts.incremental": "TypeScript: schakel incrementele builds of projectreferenties in voor grote codebases.",
+      "suggest.python.venv": "Python: gebruik virtuele omgevingen om installaties geÃƒÆ’Ã‚Â¯soleerd en snel te houden.",
+      "suggest.java.lts": "Java: gebruik een actuele LTS-JDK en schakel build-caches (Gradle/Maven) in voor snellere rebuilds.",
+      "suggest.docker.windows": "Docker Desktop (Windows): gebruik de WSL2-backend en stem CPU/RAM-limieten af op je workload.",
+      "suggest.docker.mac": "Docker Desktop (macOS): stem CPU/RAM-limieten en file sharing af (VirtioFS indien beschikbaar).",
+      "checklist.osDrivers": "Werk OS en apparaatdrivers (GPU, chipset, Wi-Fi/LAN) bij naar de nieuwste stabiele versies.",
+      "checklist.powerPlan": "Gebruik een High Performance/Best Performance energieplan tijdens coderen of bouwen.",
+      "checklist.startupApps": "Schakel opstartapps en achtergrondservices uit die je niet gebruikt.",
+      "checklist.diskSpace": "Houd minstens 20% schijfruimte vrij; ruim schijf op en verwijder grote tempbestanden.",
+      "checklist.ssd": "Gebruik SSD-opslag voor projecten; vermijd zware builds op trage externe schijven.",
+      "checklist.visualEffects": "Verminder visuele effecten/animaties voor een snellere UI.",
+      "checklist.antivirus": "Sluit projectmappen (node_modules, build, dist) uit van realtime antivirusscanning.",
+      "checklist.wifi": "Gebruik Ethernet of sterke 5GHz wifi; update routerfirmware en herstart regelmatig.",
+      "checklist.dns": "Stel DNS in op een snelle provider en controleer lage latentie voor package downloads.",
+      "checklist.browser": "Beperk browsertabs en sluit zware apps tijdens builds.",
+      "checklist.hwAccel": "Schakel hardwareversnelling in waar ondersteund (browser/IDE).",
+      "checklist.cliTools": "Houd CLI-tools up-to-date (Node.js, npm, Git, Docker, Java).",
+      "checklist.reboot": "Herstart na grote updates om oude processen en locks op te schonen."
+    }
+  },
+  fr: {
+    dir: "ltr",
+    strings: {
+      "app.title": "Developer Diagnostics Kit",
+      "app.badge": "Windows + macOS",
+      "platform.windows": "Windows",
+      "platform.macos": "macOS",
+      "language.title": "Choisir la langue",
+      "language.subtitle": "Nous pouvons dÃƒÆ’Ã‚Â©tecter automatiquement selon votre rÃƒÆ’Ã‚Â©gion.",
+      "language.auto": "DÃƒÆ’Ã‚Â©tecter automatiquement la langue",
+      "language.manual": "Ou choisir manuellement",
+      "language.continue": "Continuer",
+      "language.status.idle": "En attente.",
+      "language.status.detecting": "DÃƒÆ’Ã‚Â©tection de la langue...",
+      "language.status.detected": "DÃƒÆ’Ã‚Â©tectÃƒÆ’Ã‚Â© : {language}.",
+      "language.status.failed": "Impossible de dÃƒÆ’Ã‚Â©tecter la langue.",
+      "language.label.enGB": "Anglais (R.-U.)",
+      "language.label.nl": "NÃƒÆ’Ã‚Â©erlandais",
+      "language.label.hi": "ÃƒÂ Ã‚Â¤Ã‚Â¹ÃƒÂ Ã‚Â¤Ã‚Â¿ÃƒÂ Ã‚Â¤Ã‚Â¨ÃƒÂ Ã‚Â¥Ã‚ÂÃƒÂ Ã‚Â¤Ã‚Â¦ÃƒÂ Ã‚Â¥Ã¢â€šÂ¬",
+      "language.label.ar": "ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â±ÃƒËœÃ‚Â¨Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â©",
+      "language.label.pl": "Polonais",
+      "language.label.uk": "Ukrainien",
+      "language.label.fr": "FranÃƒÆ’Ã‚Â§ais",
+      "language.label.pt": "Portugais",
+      "language.label.es": "Espagnol",
+      "language.label.it": "Italien",
+      "language.label.id": "IndonÃƒÆ’Ã‚Â©sien",
+      "setup.title": "Installation",
+      "setup.note": "Installe les dÃƒÆ’Ã‚Â©pendances de dev du projet et dÃƒÆ’Ã‚Â©marre l'app dev. Utile uniquement si vous exÃƒÆ’Ã‚Â©cutez depuis la source.",
+      "setup.list.install": "ExÃƒÆ’Ã‚Â©cutera : npm install",
+      "setup.list.start": "ExÃƒÆ’Ã‚Â©cutera : npm start",
+      "setup.install": "Installer les dÃƒÆ’Ã‚Â©pendances",
+      "setup.start": "DÃƒÆ’Ã‚Â©marrer l'app",
+      "setup.status.waiting": "En attente.",
+      "setup.status.installing": "Installation...",
+      "setup.status.starting": "DÃƒÆ’Ã‚Â©marrage...",
+      "setup.status.done": "TerminÃƒÆ’Ã‚Â©.",
+      "mode.title": "Mode de test",
+      "mode.brief": "Bref",
+      "mode.extensive": "Approfondi",
+      "extras.title": "Extras",
+      "extras.software": "Logiciels/IDE",
+      "extras.dependencies": "Outils & langages",
+      "extras.optimization": "Inclure les vÃƒÆ’Ã‚Â©rifications d'optimisation",
+      "actions.run": "Lancer le diagnostic",
+      "status.ready": "PrÃƒÆ’Ã‚Âªt.",
+      "status.running": "Diagnostic {mode} en cours...",
+      "status.complete": "Diagnostic {mode} terminÃƒÆ’Ã‚Â©.",
+      "status.failed": "Diagnostic ÃƒÆ’Ã‚Â©chouÃƒÆ’Ã‚Â©.",
+      "status.wrapping": "Finalisation...",
+      "status.exporting": "Enregistrement {format}...",
+      "status.export.complete": "Export terminÃƒÆ’Ã‚Â©.",
+      "status.export.canceled": "Export annulÃƒÆ’Ã‚Â©.",
+      "status.export.failed": "Export ÃƒÆ’Ã‚Â©chouÃƒÆ’Ã‚Â©.",
+      "progress.title": "ExÃƒÆ’Ã‚Â©cution du diagnostic...",
+      "progress.preparing": "PrÃƒÆ’Ã‚Â©paration des vÃƒÆ’Ã‚Â©rifications.",
+      "progress.running": "VÃƒÆ’Ã‚Â©rifications {mode} en cours...",
+      "results.button": "RÃƒÆ’Ã‚Â©sultats",
+      "results.title": "RÃƒÆ’Ã‚Â©sultats",
+      "results.placeholder": "Lancez le diagnostic pour voir les rÃƒÆ’Ã‚Â©sultats.",
+      "export.title": "Exporter les rÃƒÆ’Ã‚Â©sultats",
+      "export.button": "Exporter les rÃƒÆ’Ã‚Â©sultats",
+      "export.previous": "PrÃƒÆ’Ã‚Â©cÃƒÆ’Ã‚Â©dent",
+      "results.status.ready": "PrÃƒÆ’Ã‚Âªt.",
+      "results.status.running": "En cours...",
+      "results.status.complete": "TerminÃƒÆ’Ã‚Â©.",
+      "results.status.failed": "ÃƒÆ’Ã¢â‚¬Â°chouÃƒÆ’Ã‚Â©.",
+      "suggestions.title": "Suggestions d'optimisation",
+      "suggestions.placeholder": "Lancez le diagnostic pour voir les suggestions.",
+      "actions.close": "Fermer l'application",
+      "modal.title": "Exporter les rÃƒÆ’Ã‚Â©sultats",
+      "modal.subtitle": "Choisir un format :",
+      "modal.cancel": "Annuler",
+      "results.brief.title": "AperÃƒÆ’Ã‚Â§u bref",
+      "results.extensive.title": "Diagnostic approfondi",
+      "section.os": "SystÃƒÆ’Ã‚Â¨me",
+      "section.cpu": "CPU (Processeur)",
+      "section.ram": "Modules RAM",
+      "section.gpu": "GPU (Carte graphique)",
+      "section.internet": "Internet",
+      "section.network": "RÃƒÆ’Ã‚Â©seau",
+      "section.system": "ParamÃƒÆ’Ã‚Â¨tres systÃƒÆ’Ã‚Â¨me",
+      "section.process": "Processus",
+      "section.app": "App",
+      "section.work": "PrÃƒÆ’Ã‚Â©paration",
+      "section.cli": "Outils CLI",
+      "section.software": "Logiciels/IDE installÃƒÆ’Ã‚Â©s",
+      "section.dependencies": "Outils & langages",
+      "section.suggestions": "Suggestions",
+      "label.version": "version",
+      "label.release": "release",
+      "label.arch": "arch",
+      "label.hostname": "nom d'hÃƒÆ’Ã‚Â´te",
+      "label.ip": "ip",
+      "label.updateStatus": "statut des mises ÃƒÆ’Ã‚Â  jour",
+      "label.vendor": "fournisseur",
+      "label.model": "modÃƒÆ’Ã‚Â¨le",
+      "label.cores": "cÃƒâ€¦Ã¢â‚¬Å“urs",
+      "label.installed": "installÃƒÆ’Ã‚Â©",
+      "label.totalSpeed": "vitesse totale",
+      "label.voltage": "tension",
+      "label.loadAvg": "charge moyenne",
+      "label.total": "total",
+      "label.used": "utilisÃƒÆ’Ã‚Â©",
+      "label.free": "libre",
+      "label.intellijCap": "plafond IntelliJ",
+      "label.altIdeCaps": "Plafonds IDE alternatifs",
+      "label.driver": "pilote",
+      "label.speed": "vitesse",
+      "label.test": "test",
+      "label.download": "tÃƒÆ’Ã‚Â©lÃƒÆ’Ã‚Â©chargement",
+      "label.upload": "envoi",
+      "label.ping": "ping",
+      "label.status": "statut",
+      "label.gateway": "passerelle",
+      "label.routerFirmware": "firmware du routeur",
+      "label.wifi": "wifi",
+      "label.signal": "signal",
+      "label.lan": "lan",
+      "label.power": "ÃƒÆ’Ã‚Â©nergie",
+      "label.name": "nom",
+      "label.electron": "electron",
+      "label.node": "node",
+      "label.chrome": "chrome",
+      "label.javaHome": "java home",
+      "label.platform": "plateforme",
+      "label.missingEssentials": "essentiels manquants",
+      "brief.os": "OS",
+      "brief.arch": "arch",
+      "brief.cpu": "CPU",
+      "brief.ram": "RAM",
+      "brief.gpu": "GPU",
+      "brief.internet": "Internet",
+      "brief.cli": "Outils CLI",
+      "brief.software": "Logiciels/IDE",
+      "brief.dependencies": "Outils & langages",
+      "brief.missing": "Essentiels manquants",
+      "note.skipped": "ignorÃƒÆ’Ã‚Â© (lancer l'analyse complÃƒÆ’Ã‚Â¨te pour le test de vitesse)",
+      "note.optimization.disabled": "VÃƒÆ’Ã‚Â©rifications d'optimisation dÃƒÆ’Ã‚Â©sactivÃƒÆ’Ã‚Â©es.",
+      "note.noDiagnostics": "Aucun diagnostic disponible.",
+      "note.noIssues": "Aucun problÃƒÆ’Ã‚Â¨me immÃƒÆ’Ã‚Â©diat trouvÃƒÆ’Ã‚Â©. Le systÃƒÆ’Ã‚Â¨me semble sain.",
+      "note.potential": "AmÃƒÆ’Ã‚Â©lioration potentielle (estimation) : {min}-{max}%.",
+      "note.missing.none": "aucun",
+      "note.na": "n/a",
+      "suggest.checklist.brief": "Checklist de dÃƒÆ’Ã‚Â©marrage : vÃƒÆ’Ã‚Â©rifiez que les outils essentiels sont installÃƒÆ’Ã‚Â©s et que les builds fonctionnent.",
+      "suggest.checklist.extensive": "Checklist performance max : privilÃƒÆ’Ã‚Â©giez les ÃƒÆ’Ã‚Â©tapes qui amÃƒÆ’Ã‚Â©liorent vitesse et efficacitÃƒÆ’Ã‚Â©.",
+      "suggest.memory.low": "MÃƒÆ’Ã‚Â©moire libre faible : fermez les apps inutilisÃƒÆ’Ã‚Â©es ou redÃƒÆ’Ã‚Â©marrez pour libÃƒÆ’Ã‚Â©rer la RAM.",
+      "suggest.memory.veryHigh": "Utilisation RAM >= 90% : fermez des apps lourdes, mettez en pause les builds ou augmentez la RAM.",
+      "suggest.memory.high": "Utilisation RAM >= 80% : envisagez de fermer des apps ou d'augmenter la RAM si c'est frÃƒÆ’Ã‚Â©quent.",
+      "suggest.memory.reserve": "Gardez 20% de RAM libre pour le cache et l'OS ; 10% est le minimum pour ÃƒÆ’Ã‚Â©viter les ralentissements.",
+      "suggest.cpu.high": "Charge CPU ÃƒÆ’Ã‚Â©levÃƒÆ’Ã‚Â©e : vÃƒÆ’Ã‚Â©rifiez le Gestionnaire des tÃƒÆ’Ã‚Â¢ches pour les processus lourds.",
+      "suggest.internet.failed": "ÃƒÆ’Ã¢â‚¬Â°chec du test Internet : vÃƒÆ’Ã‚Â©rifiez votre connexion ou le pare-feu.",
+      "suggest.internet.latency": "Latence Internet ÃƒÆ’Ã‚Â©levÃƒÆ’Ã‚Â©e : essayez un autre rÃƒÆ’Ã‚Â©seau ou redÃƒÆ’Ã‚Â©marrez le routeur.",
+      "suggest.os.updates": "Mises ÃƒÆ’Ã‚Â  jour macOS disponibles : installez les derniÃƒÆ’Ã‚Â¨res mises ÃƒÆ’Ã‚Â  jour.",
+      "suggest.gpu.full": "ExÃƒÆ’Ã‚Â©cutez le diagnostic complet pour inclure GPU et dÃƒÆ’Ã‚Â©tails de processus.",
+      "suggest.ide.cap": "Plafond JetBrains IDE dÃƒÆ’Ã‚Â©tectÃƒÆ’Ã‚Â© : augmentez le heap si les performances sont lentes.",
+      "suggest.wifi.weak": "Signal Wi-Fi faible (<60%) : rapprochez-vous du routeur ou utilisez Ethernet.",
+      "suggest.wifi.weakRssi": "Signal Wi-Fi faible (RSSI bas) : rapprochez-vous du routeur ou utilisez Ethernet.",
+      "suggest.power.plan": "Plan d'alimentation non performant : passez en Meilleures performances pendant le dev.",
+      "suggest.vscode.extensions": "VS Code : dÃƒÆ’Ã‚Â©sactivez les extensions inutiles et excluez les dossiers build/output du suivi.",
+      "suggest.jetbrains.tune": "JetBrains IDE : dÃƒÆ’Ã‚Â©sactivez les plugins inutiles, excluez l'output du build de l'indexation et augmentez le heap si besoin.",
+      "suggest.vs.parallel": "Visual Studio : activez les builds parallÃƒÆ’Ã‚Â¨les et dÃƒÆ’Ã‚Â©chargez les projets inutiles pour rÃƒÆ’Ã‚Â©duire le temps de chargement.",
+      "suggest.xcode.derived": "Xcode : nettoyez DerivedData quand l'indexation ou les builds ralentissent.",
+      "suggest.android.accel": "Android Studio : activez l'accÃƒÆ’Ã‚Â©lÃƒÆ’Ã‚Â©ration matÃƒÆ’Ã‚Â©rielle de l'ÃƒÆ’Ã‚Â©mulateur et gardez le cache Gradle sur un stockage rapide.",
+      "suggest.node.lts": "Node.js : utilisez la derniÃƒÆ’Ã‚Â¨re version LTS et gardez les dÃƒÆ’Ã‚Â©pendances sur SSD.",
+      "suggest.ts.incremental": "TypeScript : activez les builds incrÃƒÆ’Ã‚Â©mentales ou les rÃƒÆ’Ã‚Â©fÃƒÆ’Ã‚Â©rences de projet pour les gros codebases.",
+      "suggest.python.venv": "Python : utilisez des environnements virtuels pour isoler les installations.",
+      "suggest.java.lts": "Java : utilisez un JDK LTS rÃƒÆ’Ã‚Â©cent et activez les caches de build (Gradle/Maven).",
+      "suggest.docker.windows": "Docker Desktop (Windows) : utilisez le backend WSL2 et ajustez les limites CPU/RAM.",
+      "suggest.docker.mac": "Docker Desktop (macOS) : ajustez CPU/RAM et le partage de fichiers (VirtioFS si disponible).",
+      "checklist.osDrivers": "Mettez ÃƒÆ’Ã‚Â  jour l'OS et les pilotes (GPU, chipset, Wi-Fi/LAN) vers les derniÃƒÆ’Ã‚Â¨res versions stables.",
+      "checklist.powerPlan": "Utilisez un plan d'alimentation Haute performance pendant le dev ou les builds.",
+      "checklist.startupApps": "DÃƒÆ’Ã‚Â©sactivez les apps au dÃƒÆ’Ã‚Â©marrage et services en arriÃƒÆ’Ã‚Â¨re-plan inutilisÃƒÆ’Ã‚Â©s.",
+      "checklist.diskSpace": "Gardez au moins 20% d'espace disque libre ; nettoyez le disque et supprimez les gros fichiers temporaires.",
+      "checklist.ssd": "PrÃƒÆ’Ã‚Â©fÃƒÆ’Ã‚Â©rez un SSD pour les projets ; ÃƒÆ’Ã‚Â©vitez les builds lourds sur des disques externes lents.",
+      "checklist.visualEffects": "RÃƒÆ’Ã‚Â©duisez les effets visuels/animations pour une UI plus rapide.",
+      "checklist.antivirus": "Excluez les dossiers projet (node_modules, build, dist) de l'analyse antivirus en temps rÃƒÆ’Ã‚Â©el.",
+      "checklist.wifi": "Utilisez Ethernet ou un Wi-Fi 5GHz fort ; mettez ÃƒÆ’Ã‚Â  jour le firmware du routeur et redÃƒÆ’Ã‚Â©marrez rÃƒÆ’Ã‚Â©guliÃƒÆ’Ã‚Â¨rement.",
+      "checklist.dns": "Configurez un DNS rapide et vÃƒÆ’Ã‚Â©rifiez une faible latence pour les tÃƒÆ’Ã‚Â©lÃƒÆ’Ã‚Â©chargements.",
+      "checklist.browser": "Limitez les onglets du navigateur et fermez les apps lourdes pendant les builds.",
+      "checklist.hwAccel": "Activez l'accÃƒÆ’Ã‚Â©lÃƒÆ’Ã‚Â©ration matÃƒÆ’Ã‚Â©rielle quand c'est supportÃƒÆ’Ã‚Â© (navigateur/IDE).",
+      "checklist.cliTools": "Gardez les outils CLI ÃƒÆ’Ã‚Â  jour (Node.js, npm, Git, Docker, Java).",
+      "checklist.reboot": "RedÃƒÆ’Ã‚Â©marrez aprÃƒÆ’Ã‚Â¨s des mises ÃƒÆ’Ã‚Â  jour majeures pour nettoyer les processus."
+    }
+  },
+  es: {
+    dir: "ltr",
+    strings: {
+      "app.title": "Developer Diagnostics Kit",
+      "app.badge": "Windows + macOS",
+      "platform.windows": "Windows",
+      "platform.macos": "macOS",
+      "language.title": "Elegir idioma",
+      "language.subtitle": "Podemos detectar automÃƒÆ’Ã‚Â¡ticamente segÃƒÆ’Ã‚Âºn tu regiÃƒÆ’Ã‚Â³n.",
+      "language.auto": "Detectar idioma automÃƒÆ’Ã‚Â¡ticamente",
+      "language.manual": "O seleccionar manualmente",
+      "language.continue": "Continuar",
+      "language.status.idle": "Esperando.",
+      "language.status.detecting": "Detectando idioma...",
+      "language.status.detected": "Detectado: {language}.",
+      "language.status.failed": "No se pudo detectar el idioma.",
+      "language.label.enGB": "InglÃƒÆ’Ã‚Â©s (RU)",
+      "language.label.nl": "NeerlandÃƒÆ’Ã‚Â©s",
+      "language.label.hi": "ÃƒÂ Ã‚Â¤Ã‚Â¹ÃƒÂ Ã‚Â¤Ã‚Â¿ÃƒÂ Ã‚Â¤Ã‚Â¨ÃƒÂ Ã‚Â¥Ã‚ÂÃƒÂ Ã‚Â¤Ã‚Â¦ÃƒÂ Ã‚Â¥Ã¢â€šÂ¬",
+      "language.label.ar": "ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â±ÃƒËœÃ‚Â¨Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â©",
+      "language.label.pl": "Polaco",
+      "language.label.uk": "Ucraniano",
+      "language.label.fr": "FrancÃƒÆ’Ã‚Â©s",
+      "language.label.pt": "PortuguÃƒÆ’Ã‚Â©s",
+      "language.label.es": "EspaÃƒÆ’Ã‚Â±ol",
+      "language.label.it": "Italiano",
+      "language.label.id": "Indonesio",
+      "setup.title": "InstalaciÃƒÆ’Ã‚Â³n",
+      "setup.note": "Instala las dependencias de desarrollo del proyecto y arranca la app de desarrollo. Solo necesario si ejecutas desde el cÃƒÆ’Ã‚Â³digo fuente.",
+      "setup.list.install": "Se ejecutarÃƒÆ’Ã‚Â¡: npm install",
+      "setup.list.start": "Se ejecutarÃƒÆ’Ã‚Â¡: npm start",
+      "setup.install": "Instalar dependencias",
+      "setup.start": "Iniciar app",
+      "setup.status.waiting": "Esperando.",
+      "setup.status.installing": "Instalando...",
+      "setup.status.starting": "Iniciando...",
+      "setup.status.done": "Listo.",
+      "mode.title": "Modo de prueba",
+      "mode.brief": "Breve",
+      "mode.extensive": "Extenso",
+      "extras.title": "Extras",
+      "extras.software": "Software/IDEs",
+      "extras.dependencies": "Herramientas e idiomas",
+      "extras.optimization": "Incluir comprobaciones de optimizaciÃƒÆ’Ã‚Â³n",
+      "actions.run": "Ejecutar diagnÃƒÆ’Ã‚Â³stico",
+      "status.ready": "Listo.",
+      "status.running": "Ejecutando diagnÃƒÆ’Ã‚Â³stico {mode}...",
+      "status.complete": "DiagnÃƒÆ’Ã‚Â³stico {mode} completado.",
+      "status.failed": "DiagnÃƒÆ’Ã‚Â³stico fallido.",
+      "status.wrapping": "Finalizando...",
+      "status.exporting": "Guardando {format}...",
+      "status.export.complete": "ExportaciÃƒÆ’Ã‚Â³n completada.",
+      "status.export.canceled": "ExportaciÃƒÆ’Ã‚Â³n cancelada.",
+      "status.export.failed": "ExportaciÃƒÆ’Ã‚Â³n fallida.",
+      "progress.title": "Ejecutando diagnÃƒÆ’Ã‚Â³stico...",
+      "progress.preparing": "Preparando comprobaciones.",
+      "progress.running": "Ejecutando comprobaciones {mode}...",
+      "results.button": "Resultados",
+      "results.title": "Resultados",
+      "results.placeholder": "Ejecuta el diagnÃƒÆ’Ã‚Â³stico para ver los resultados.",
+      "export.title": "Exportar resultados",
+      "export.button": "Exportar resultados",
+      "export.previous": "Anterior",
+      "results.status.ready": "Listo.",
+      "results.status.running": "En curso...",
+      "results.status.complete": "Completado.",
+      "results.status.failed": "Fallido.",
+      "suggestions.title": "Sugerencias de optimizaciÃƒÆ’Ã‚Â³n",
+      "suggestions.placeholder": "Ejecuta el diagnÃƒÆ’Ã‚Â³stico para ver sugerencias.",
+      "actions.close": "Cerrar aplicaciÃƒÆ’Ã‚Â³n",
+      "modal.title": "Exportar resultados",
+      "modal.subtitle": "Elige un formato:",
+      "modal.cancel": "Cancelar",
+      "results.brief.title": "Resumen breve",
+      "results.extensive.title": "DiagnÃƒÆ’Ã‚Â³stico extenso",
+      "section.os": "Sistema operativo",
+      "section.cpu": "CPU (Procesador)",
+      "section.ram": "MÃƒÆ’Ã‚Â³dulos RAM",
+      "section.gpu": "GPU (Tarjeta grÃƒÆ’Ã‚Â¡fica)",
+      "section.internet": "Internet",
+      "section.network": "Red",
+      "section.system": "Ajustes del sistema",
+      "section.process": "Proceso",
+      "section.app": "App",
+      "section.work": "PreparaciÃƒÆ’Ã‚Â³n",
+      "section.cli": "Herramientas CLI",
+      "section.software": "Software/IDEs instalados",
+      "section.dependencies": "Herramientas e idiomas",
+      "section.suggestions": "Sugerencias",
+      "label.version": "versiÃƒÆ’Ã‚Â³n",
+      "label.release": "release",
+      "label.arch": "arquitectura",
+      "label.hostname": "nombre de host",
+      "label.ip": "ip",
+      "label.updateStatus": "estado de actualizaciÃƒÆ’Ã‚Â³n",
+      "label.vendor": "fabricante",
+      "label.model": "modelo",
+      "label.cores": "nÃƒÆ’Ã‚Âºcleos",
+      "label.installed": "instalado",
+      "label.totalSpeed": "velocidad total",
+      "label.voltage": "voltaje",
+      "label.loadAvg": "carga media",
+      "label.total": "total",
+      "label.used": "usado",
+      "label.free": "libre",
+      "label.intellijCap": "lÃƒÆ’Ã‚Â­mite IntelliJ",
+      "label.altIdeCaps": "LÃƒÆ’Ã‚Â­mites IDE alternativos",
+      "label.driver": "controlador",
+      "label.speed": "velocidad",
+      "label.test": "prueba",
+      "label.download": "descarga",
+      "label.upload": "subida",
+      "label.ping": "ping",
+      "label.status": "estado",
+      "label.gateway": "puerta de enlace",
+      "label.routerFirmware": "firmware del router",
+      "label.wifi": "wifi",
+      "label.signal": "seÃƒÆ’Ã‚Â±al",
+      "label.lan": "lan",
+      "label.power": "energÃƒÆ’Ã‚Â­a",
+      "label.name": "nombre",
+      "label.electron": "electron",
+      "label.node": "node",
+      "label.chrome": "chrome",
+      "label.javaHome": "java home",
+      "label.platform": "plataforma",
+      "label.missingEssentials": "esenciales faltantes",
+      "brief.os": "OS",
+      "brief.arch": "arch",
+      "brief.cpu": "CPU",
+      "brief.ram": "RAM",
+      "brief.gpu": "GPU",
+      "brief.internet": "Internet",
+      "brief.cli": "Herramientas CLI",
+      "brief.software": "Software/IDEs",
+      "brief.dependencies": "Herramientas e idiomas",
+      "brief.missing": "Esenciales faltantes",
+      "note.skipped": "omitido (ejecuta el anÃƒÆ’Ã‚Â¡lisis extenso para prueba de velocidad)",
+      "note.optimization.disabled": "Comprobaciones de optimizaciÃƒÆ’Ã‚Â³n desactivadas.",
+      "note.noDiagnostics": "No hay diagnÃƒÆ’Ã‚Â³stico disponible.",
+      "note.noIssues": "No se encontraron problemas inmediatos. El sistema se ve saludable.",
+      "note.potential": "Mejora potencial (estimaciÃƒÆ’Ã‚Â³n): {min}-{max}%.",
+      "note.missing.none": "ninguno",
+      "note.na": "n/a",
+      "suggest.checklist.brief": "Checklist de inicio: confirma que las herramientas esenciales estÃƒÆ’Ã‚Â¡n instaladas y que los builds funcionan.",
+      "suggest.checklist.extensive": "Checklist de mÃƒÆ’Ã‚Â¡ximo rendimiento: enfÃƒÆ’Ã‚Â³cate en pasos que mejoren velocidad y eficiencia.",
+      "suggest.memory.low": "Poca memoria libre: cierra apps sin usar o reinicia para liberar RAM.",
+      "suggest.memory.veryHigh": "Uso de RAM >= 90%: cierra apps pesadas, pausa builds o aumenta la RAM.",
+      "suggest.memory.high": "Uso de RAM >= 80%: considera cerrar apps o aumentar RAM si es frecuente.",
+      "suggest.memory.reserve": "MantÃƒÆ’Ã‚Â©n 20% de RAM libre para cachÃƒÆ’Ã‚Â© y tareas del SO; 10% es el mÃƒÆ’Ã‚Â­nimo para evitar lentitud.",
+      "suggest.cpu.high": "Alta carga de CPU: revisa el Administrador de tareas para procesos pesados.",
+      "suggest.internet.failed": "FallÃƒÆ’Ã‚Â³ la prueba de Internet: verifica tu conexiÃƒÆ’Ã‚Â³n o firewall.",
+      "suggest.internet.latency": "Alta latencia de Internet: prueba otra red o reinicia el router.",
+      "suggest.os.updates": "Actualizaciones de macOS disponibles: instala las ÃƒÆ’Ã‚Âºltimas actualizaciones.",
+      "suggest.gpu.full": "Ejecuta el diagnÃƒÆ’Ã‚Â³stico completo para incluir GPU y detalles de procesos.",
+      "suggest.ide.cap": "LÃƒÆ’Ã‚Â­mite de IDE JetBrains detectado: aumenta el heap si el rendimiento es lento.",
+      "suggest.wifi.weak": "SeÃƒÆ’Ã‚Â±al Wi-Fi dÃƒÆ’Ã‚Â©bil (<60%): acÃƒÆ’Ã‚Â©rcate al router o usa Ethernet.",
+      "suggest.wifi.weakRssi": "SeÃƒÆ’Ã‚Â±al Wi-Fi dÃƒÆ’Ã‚Â©bil (RSSI bajo): acÃƒÆ’Ã‚Â©rcate al router o usa Ethernet.",
+      "suggest.power.plan": "El plan de energÃƒÆ’Ã‚Â­a no estÃƒÆ’Ã‚Â¡ en alto rendimiento: cambia a Alto/Mejor rendimiento al programar o compilar.",
+      "suggest.vscode.extensions": "VS Code: desactiva extensiones no usadas y excluye carpetas build/output del seguimiento y bÃƒÆ’Ã‚Âºsqueda.",
+      "suggest.jetbrains.tune": "JetBrains IDEs: desactiva plugins no usados, excluye la salida de build del indexado y aumenta el heap si hace falta.",
+      "suggest.vs.parallel": "Visual Studio: habilita builds en paralelo y descarga proyectos no usados para reducir tiempos de carga.",
+      "suggest.xcode.derived": "Xcode: limpia DerivedData cuando aumenten los tiempos de indexado o build.",
+      "suggest.android.accel": "Android Studio: habilita aceleraciÃƒÆ’Ã‚Â³n por hardware del emulador y mantÃƒÆ’Ã‚Â©n la cachÃƒÆ’Ã‚Â© de Gradle en almacenamiento rÃƒÆ’Ã‚Â¡pido.",
+      "suggest.node.lts": "Node.js: usa la ÃƒÆ’Ã‚Âºltima versiÃƒÆ’Ã‚Â³n LTS y guarda dependencias en SSD.",
+      "suggest.ts.incremental": "TypeScript: habilita builds incrementales o referencias de proyecto en codebases grandes.",
+      "suggest.python.venv": "Python: usa entornos virtuales para mantener instalaciones aisladas y rÃƒÆ’Ã‚Â¡pidas.",
+      "suggest.java.lts": "Java: usa un JDK LTS actual y habilita cachÃƒÆ’Ã‚Â©s de build (Gradle/Maven).",
+      "suggest.docker.windows": "Docker Desktop (Windows): usa backend WSL2 y ajusta lÃƒÆ’Ã‚Â­mites de CPU/RAM segÃƒÆ’Ã‚Âºn tu carga.",
+      "suggest.docker.mac": "Docker Desktop (macOS): ajusta lÃƒÆ’Ã‚Â­mites de CPU/RAM y el uso compartido de archivos (VirtioFS si estÃƒÆ’Ã‚Â¡ disponible).",
+      "checklist.osDrivers": "Actualiza el SO y drivers (GPU, chipset, Wi-Fi/LAN) a las ÃƒÆ’Ã‚Âºltimas versiones estables.",
+      "checklist.powerPlan": "Usa un plan de energÃƒÆ’Ã‚Â­a de alto rendimiento durante el desarrollo o builds.",
+      "checklist.startupApps": "Desactiva apps de inicio y servicios en segundo plano que no uses.",
+      "checklist.diskSpace": "MantÃƒÆ’Ã‚Â©n al menos 20% de espacio libre; limpia disco y elimina archivos temporales grandes.",
+      "checklist.ssd": "Prefiere SSD para proyectos; evita builds pesados en discos externos lentos.",
+      "checklist.visualEffects": "Reduce efectos visuales/animaciones para una UI mÃƒÆ’Ã‚Â¡s rÃƒÆ’Ã‚Â¡pida.",
+      "checklist.antivirus": "Excluye carpetas de proyecto (node_modules, build, dist) del escaneo antivirus en tiempo real.",
+      "checklist.wifi": "Usa Ethernet o Wi-Fi 5GHz fuerte; actualiza firmware del router y reinicia periÃƒÆ’Ã‚Â³dicamente.",
+      "checklist.dns": "Configura DNS rÃƒÆ’Ã‚Â¡pido y verifica baja latencia para descargas.",
+      "checklist.browser": "Limita pestaÃƒÆ’Ã‚Â±as del navegador y cierra apps pesadas durante builds.",
+      "checklist.hwAccel": "Habilita aceleraciÃƒÆ’Ã‚Â³n por hardware donde sea compatible (navegador/IDE).",
+      "checklist.cliTools": "MantÃƒÆ’Ã‚Â©n herramientas CLI actualizadas (Node.js, npm, Git, Docker, Java).",
+      "checklist.reboot": "Reinicia despuÃƒÆ’Ã‚Â©s de grandes actualizaciones para limpiar procesos."
+    }
+  },
+  pt: {
+    dir: "ltr",
+    strings: {
+      "app.title": "Developer Diagnostics Kit",
+      "app.badge": "Windows + macOS",
+      "platform.windows": "Windows",
+      "platform.macos": "macOS",
+      "language.title": "Escolher idioma",
+      "language.subtitle": "Podemos detetar automaticamente com base na sua regiÃƒÆ’Ã‚Â£o.",
+      "language.auto": "Detetar idioma automaticamente",
+      "language.manual": "Ou selecionar manualmente",
+      "language.continue": "Continuar",
+      "language.status.idle": "A aguardar.",
+      "language.status.detecting": "A detetar idioma...",
+      "language.status.detected": "Detetado: {language}.",
+      "language.status.failed": "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel detetar o idioma.",
+      "language.label.enGB": "InglÃƒÆ’Ã‚Âªs (RU)",
+      "language.label.nl": "NeerlandÃƒÆ’Ã‚Âªs",
+      "language.label.hi": "ÃƒÂ Ã‚Â¤Ã‚Â¹ÃƒÂ Ã‚Â¤Ã‚Â¿ÃƒÂ Ã‚Â¤Ã‚Â¨ÃƒÂ Ã‚Â¥Ã‚ÂÃƒÂ Ã‚Â¤Ã‚Â¦ÃƒÂ Ã‚Â¥Ã¢â€šÂ¬",
+      "language.label.ar": "ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â±ÃƒËœÃ‚Â¨Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â©",
+      "language.label.pl": "Polaco",
+      "language.label.uk": "Ucraniano",
+      "language.label.fr": "FrancÃƒÆ’Ã‚Âªs",
+      "language.label.pt": "PortuguÃƒÆ’Ã‚Âªs",
+      "language.label.es": "Espanhol",
+      "language.label.it": "Italiano",
+      "language.label.id": "IndonÃƒÆ’Ã‚Â©sio",
+      "setup.title": "InstalaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o",
+      "setup.note": "Instala as dependÃƒÆ’Ã‚Âªncias de desenvolvimento do projeto e inicia a app de desenvolvimento. SÃƒÆ’Ã‚Â³ ÃƒÆ’Ã‚Â© necessÃƒÆ’Ã‚Â¡rio se executar a partir da fonte.",
+      "setup.list.install": "Vai executar: npm install",
+      "setup.list.start": "Vai executar: npm start",
+      "setup.install": "Instalar dependÃƒÆ’Ã‚Âªncias",
+      "setup.start": "Iniciar app",
+      "setup.status.waiting": "A aguardar.",
+      "setup.status.installing": "A instalar...",
+      "setup.status.starting": "A iniciar...",
+      "setup.status.done": "ConcluÃƒÆ’Ã‚Â­do.",
+      "mode.title": "Modo de teste",
+      "mode.brief": "Breve",
+      "mode.extensive": "Extenso",
+      "extras.title": "Extras",
+      "extras.software": "Software/IDEs",
+      "extras.dependencies": "Ferramentas e linguagens",
+      "extras.optimization": "Incluir verificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes de otimizaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o",
+      "actions.run": "Executar diagnÃƒÆ’Ã‚Â³stico",
+      "status.ready": "Pronto.",
+      "status.running": "A executar diagnÃƒÆ’Ã‚Â³stico {mode}...",
+      "status.complete": "DiagnÃƒÆ’Ã‚Â³stico {mode} concluÃƒÆ’Ã‚Â­do.",
+      "status.failed": "DiagnÃƒÆ’Ã‚Â³stico falhou.",
+      "status.wrapping": "A finalizar...",
+      "status.exporting": "A guardar {format}...",
+      "status.export.complete": "ExportaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o concluÃƒÆ’Ã‚Â­da.",
+      "status.export.canceled": "ExportaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o cancelada.",
+      "status.export.failed": "ExportaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o falhou.",
+      "progress.title": "A executar diagnÃƒÆ’Ã‚Â³stico...",
+      "progress.preparing": "A preparar verificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes.",
+      "progress.running": "A executar verificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes {mode}...",
+      "results.button": "Resultados",
+      "results.title": "Resultados",
+      "results.placeholder": "Execute o diagnÃƒÆ’Ã‚Â³stico para ver os resultados.",
+      "export.title": "Exportar resultados",
+      "export.button": "Exportar resultados",
+      "export.previous": "Anterior",
+      "results.status.ready": "Pronto.",
+      "results.status.running": "Em curso...",
+      "results.status.complete": "ConcluÃƒÆ’Ã‚Â­do.",
+      "results.status.failed": "Falhou.",
+      "suggestions.title": "SugestÃƒÆ’Ã‚Âµes de otimizaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o",
+      "suggestions.placeholder": "Execute o diagnÃƒÆ’Ã‚Â³stico para ver sugestÃƒÆ’Ã‚Âµes.",
+      "actions.close": "Fechar aplicaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o",
+      "modal.title": "Exportar resultados",
+      "modal.subtitle": "Escolha um formato:",
+      "modal.cancel": "Cancelar",
+      "results.brief.title": "Resumo breve",
+      "results.extensive.title": "DiagnÃƒÆ’Ã‚Â³stico extenso",
+      "section.os": "Sistema operativo",
+      "section.cpu": "CPU (Processador)",
+      "section.ram": "MÃƒÆ’Ã‚Â³dulos RAM",
+      "section.gpu": "GPU (Placa grÃƒÆ’Ã‚Â¡fica)",
+      "section.internet": "Internet",
+      "section.network": "Rede",
+      "section.system": "DefiniÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes do sistema",
+      "section.process": "Processo",
+      "section.app": "App",
+      "section.work": "PreparaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o",
+      "section.cli": "Ferramentas CLI",
+      "section.software": "Software/IDEs instalados",
+      "section.dependencies": "Ferramentas e linguagens",
+      "section.suggestions": "SugestÃƒÆ’Ã‚Âµes",
+      "label.version": "versÃƒÆ’Ã‚Â£o",
+      "label.release": "release",
+      "label.arch": "arquitetura",
+      "label.hostname": "nome do anfitriÃƒÆ’Ã‚Â£o",
+      "label.ip": "ip",
+      "label.updateStatus": "estado de atualizaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o",
+      "label.vendor": "fabricante",
+      "label.model": "modelo",
+      "label.cores": "nÃƒÆ’Ã‚Âºcleos",
+      "label.installed": "instalado",
+      "label.totalSpeed": "velocidade total",
+      "label.voltage": "voltagem",
+      "label.loadAvg": "carga mÃƒÆ’Ã‚Â©dia",
+      "label.total": "total",
+      "label.used": "usado",
+      "label.free": "livre",
+      "label.intellijCap": "limite IntelliJ",
+      "label.altIdeCaps": "Limites IDE alternativos",
+      "label.driver": "driver",
+      "label.speed": "velocidade",
+      "label.test": "teste",
+      "label.download": "download",
+      "label.upload": "upload",
+      "label.ping": "ping",
+      "label.status": "estado",
+      "label.gateway": "gateway",
+      "label.routerFirmware": "firmware do router",
+      "label.wifi": "wifi",
+      "label.signal": "sinal",
+      "label.lan": "lan",
+      "label.power": "energia",
+      "label.name": "nome",
+      "label.electron": "electron",
+      "label.node": "node",
+      "label.chrome": "chrome",
+      "label.javaHome": "java home",
+      "label.platform": "plataforma",
+      "label.missingEssentials": "essenciais em falta",
+      "brief.os": "OS",
+      "brief.arch": "arch",
+      "brief.cpu": "CPU",
+      "brief.ram": "RAM",
+      "brief.gpu": "GPU",
+      "brief.internet": "Internet",
+      "brief.cli": "Ferramentas CLI",
+      "brief.software": "Software/IDEs",
+      "brief.dependencies": "Ferramentas e linguagens",
+      "brief.missing": "Essenciais em falta",
+      "note.skipped": "ignorado (execute o diagnÃƒÆ’Ã‚Â³stico extenso para teste de velocidade)",
+      "note.optimization.disabled": "VerificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes de otimizaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o desativadas.",
+      "note.noDiagnostics": "Sem diagnÃƒÆ’Ã‚Â³stico disponÃƒÆ’Ã‚Â­vel.",
+      "note.noIssues": "Nenhum problema imediato encontrado. O sistema parece saudÃƒÆ’Ã‚Â¡vel.",
+      "note.potential": "Melhoria potencial (estimativa): {min}-{max}%.",
+      "note.missing.none": "nenhum",
+      "note.na": "n/a",
+      "suggest.checklist.brief": "Checklist de inÃƒÆ’Ã‚Â­cio: confirme que as ferramentas essenciais estÃƒÆ’Ã‚Â£o instaladas e que os builds funcionam.",
+      "suggest.checklist.extensive": "Checklist de desempenho mÃƒÆ’Ã‚Â¡ximo: foque nos passos que melhoram velocidade e eficiÃƒÆ’Ã‚Âªncia.",
+      "suggest.memory.low": "Pouca memÃƒÆ’Ã‚Â³ria livre: feche apps nÃƒÆ’Ã‚Â£o usadas ou reinicie para libertar RAM.",
+      "suggest.memory.veryHigh": "Uso de RAM >= 90%: feche apps pesadas, pause builds ou aumente a RAM.",
+      "suggest.memory.high": "Uso de RAM >= 80%: considere fechar apps ou aumentar RAM se for frequente.",
+      "suggest.memory.reserve": "Mantenha 20% de RAM livre para cache e tarefas do SO; 10% ÃƒÆ’Ã‚Â© o mÃƒÆ’Ã‚Â­nimo para evitar lentidÃƒÆ’Ã‚Â£o.",
+      "suggest.cpu.high": "Carga alta de CPU: verifique o Gestor de Tarefas para processos pesados.",
+      "suggest.internet.failed": "Falha no teste de Internet: verifique a ligaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o ou a firewall.",
+      "suggest.internet.latency": "Alta latÃƒÆ’Ã‚Âªncia de Internet: tente outra rede ou reinicie o router.",
+      "suggest.os.updates": "AtualizaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes do macOS disponÃƒÆ’Ã‚Â­veis: instale as ÃƒÆ’Ã‚Âºltimas atualizaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes.",
+      "suggest.gpu.full": "Execute o diagnÃƒÆ’Ã‚Â³stico completo para incluir GPU e detalhes de processos.",
+      "suggest.ide.cap": "Limite do IDE JetBrains detetado: aumente o heap se o desempenho estiver lento.",
+      "suggest.wifi.weak": "Sinal Wi-Fi fraco (<60%): aproxime-se do router ou use Ethernet.",
+      "suggest.wifi.weakRssi": "Sinal Wi-Fi fraco (RSSI baixo): aproxime-se do router ou use Ethernet.",
+      "suggest.power.plan": "Plano de energia nÃƒÆ’Ã‚Â£o estÃƒÆ’Ã‚Â¡ em alto desempenho: mude para Alto/Melhor Desempenho ao programar ou compilar.",
+      "suggest.vscode.extensions": "VS Code: desative extensÃƒÆ’Ã‚Âµes nÃƒÆ’Ã‚Â£o usadas e exclua pastas build/output da monitorizaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o e pesquisa.",
+      "suggest.jetbrains.tune": "JetBrains IDEs: desative plugins nÃƒÆ’Ã‚Â£o usados, exclua a saÃƒÆ’Ã‚Â­da de build da indexaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o e aumente o heap se necessÃƒÆ’Ã‚Â¡rio.",
+      "suggest.vs.parallel": "Visual Studio: ative builds paralelos e descarregue projetos nÃƒÆ’Ã‚Â£o usados para reduzir o tempo de carregamento.",
+      "suggest.xcode.derived": "Xcode: limpe DerivedData quando o indexamento ou builds ficarem lentos.",
+      "suggest.android.accel": "Android Studio: ative aceleraÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de hardware do emulador e mantenha o cache do Gradle em armazenamento rÃƒÆ’Ã‚Â¡pido.",
+      "suggest.node.lts": "Node.js: use a versÃƒÆ’Ã‚Â£o LTS mais recente e mantenha dependÃƒÆ’Ã‚Âªncias no SSD.",
+      "suggest.ts.incremental": "TypeScript: ative builds incrementais ou referÃƒÆ’Ã‚Âªncias de projeto para codebases grandes.",
+      "suggest.python.venv": "Python: use ambientes virtuais para manter instalaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes isoladas e rÃƒÆ’Ã‚Â¡pidas.",
+      "suggest.java.lts": "Java: use um JDK LTS atual e ative caches de build (Gradle/Maven).",
+      "suggest.docker.windows": "Docker Desktop (Windows): use o backend WSL2 e ajuste limites de CPU/RAM ao workload.",
+      "suggest.docker.mac": "Docker Desktop (macOS): ajuste limites de CPU/RAM e partilha de ficheiros (VirtioFS se disponÃƒÆ’Ã‚Â­vel).",
+      "checklist.osDrivers": "Atualize o SO e drivers (GPU, chipset, Wi-Fi/LAN) para versÃƒÆ’Ã‚Âµes estÃƒÆ’Ã‚Â¡veis mais recentes.",
+      "checklist.powerPlan": "Use um plano de energia de Alto/Melhor Desempenho durante desenvolvimento ou builds.",
+      "checklist.startupApps": "Desative apps de arranque e serviÃƒÆ’Ã‚Â§os em segundo plano que nÃƒÆ’Ã‚Â£o usa.",
+      "checklist.diskSpace": "Mantenha pelo menos 20% de espaÃƒÆ’Ã‚Â§o livre; faÃƒÆ’Ã‚Â§a limpeza de disco e remova ficheiros temporÃƒÆ’Ã‚Â¡rios grandes.",
+      "checklist.ssd": "Prefira SSD para projetos; evite builds pesados em discos externos lentos.",
+      "checklist.visualEffects": "Reduza efeitos visuais/animaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes para uma UI mais rÃƒÆ’Ã‚Â¡pida.",
+      "checklist.antivirus": "Exclua pastas de projeto (node_modules, build, dist) da anÃƒÆ’Ã‚Â¡lise antivÃƒÆ’Ã‚Â­rus em tempo real.",
+      "checklist.wifi": "Use Ethernet ou Wi-Fi 5GHz forte; atualize o firmware do router e reinicie periodicamente.",
+      "checklist.dns": "Defina DNS rÃƒÆ’Ã‚Â¡pido e verifique baixa latÃƒÆ’Ã‚Âªncia para downloads.",
+      "checklist.browser": "Limite separadores do navegador e feche apps pesadas durante builds.",
+      "checklist.hwAccel": "Ative aceleraÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de hardware onde suportado (browser/IDE).",
+      "checklist.cliTools": "Mantenha ferramentas CLI atualizadas (Node.js, npm, Git, Docker, Java).",
+      "checklist.reboot": "Reinicie apÃƒÆ’Ã‚Â³s grandes atualizaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes para limpar processos."
+    }
+  },
+  it: {
+    dir: "ltr",
+    strings: {
+      "app.title": "Developer Diagnostics Kit",
+      "app.badge": "Windows + macOS",
+      "platform.windows": "Windows",
+      "platform.macos": "macOS",
+      "language.title": "Scegli lingua",
+      "language.subtitle": "Possiamo rilevare automaticamente in base alla tua regione.",
+      "language.auto": "Rileva automaticamente la lingua",
+      "language.manual": "Oppure scegli manualmente",
+      "language.continue": "Continua",
+      "language.status.idle": "In attesa.",
+      "language.status.detecting": "Rilevamento lingua...",
+      "language.status.detected": "Rilevata: {language}.",
+      "language.status.failed": "Impossibile rilevare la lingua.",
+      "language.label.enGB": "Inglese (UK)",
+      "language.label.nl": "Olandese",
+      "language.label.hi": "ÃƒÂ Ã‚Â¤Ã‚Â¹ÃƒÂ Ã‚Â¤Ã‚Â¿ÃƒÂ Ã‚Â¤Ã‚Â¨ÃƒÂ Ã‚Â¥Ã‚ÂÃƒÂ Ã‚Â¤Ã‚Â¦ÃƒÂ Ã‚Â¥Ã¢â€šÂ¬",
+      "language.label.ar": "ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â±ÃƒËœÃ‚Â¨Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â©",
+      "language.label.pl": "Polacco",
+      "language.label.uk": "Ucraino",
+      "language.label.fr": "Francese",
+      "language.label.pt": "Portoghese",
+      "language.label.es": "Spagnolo",
+      "language.label.it": "Italiano",
+      "language.label.id": "Indonesiano",
+      "setup.title": "Installazione",
+      "setup.note": "Installa le dipendenze di sviluppo del progetto e avvia l'app di sviluppo. Necessario solo se esegui dal sorgente.",
+      "setup.list.install": "EseguirÃƒÆ’Ã‚Â : npm install",
+      "setup.list.start": "EseguirÃƒÆ’Ã‚Â : npm start",
+      "setup.install": "Installa dipendenze",
+      "setup.start": "Avvia app",
+      "setup.status.waiting": "In attesa.",
+      "setup.status.installing": "Installazione...",
+      "setup.status.starting": "Avvio...",
+      "setup.status.done": "Fatto.",
+      "mode.title": "ModalitÃƒÆ’Ã‚Â  di test",
+      "mode.brief": "Breve",
+      "mode.extensive": "Estesa",
+      "extras.title": "Extra",
+      "extras.software": "Software/IDE",
+      "extras.dependencies": "Strumenti e linguaggi",
+      "extras.optimization": "Includi controlli di ottimizzazione",
+      "actions.run": "Esegui diagnostica",
+      "status.ready": "Pronto.",
+      "status.running": "Diagnostica {mode} in corso...",
+      "status.complete": "Diagnostica {mode} completata.",
+      "status.failed": "Diagnostica non riuscita.",
+      "status.wrapping": "Finalizzazione...",
+      "status.exporting": "Salvataggio {format}...",
+      "status.export.complete": "Esportazione completata.",
+      "status.export.canceled": "Esportazione annullata.",
+      "status.export.failed": "Esportazione non riuscita.",
+      "progress.title": "Esecuzione diagnostica...",
+      "progress.preparing": "Preparazione controlli.",
+      "progress.running": "Esecuzione controlli {mode}...",
+      "results.button": "Risultati",
+      "results.title": "Risultati",
+      "results.placeholder": "Esegui la diagnostica per vedere i risultati.",
+      "export.title": "Esporta risultati",
+      "export.button": "Esporta risultati",
+      "export.previous": "Precedente",
+      "results.status.ready": "Pronto.",
+      "results.status.running": "In corso...",
+      "results.status.complete": "Completata.",
+      "results.status.failed": "Non riuscita.",
+      "suggestions.title": "Suggerimenti di ottimizzazione",
+      "suggestions.placeholder": "Esegui la diagnostica per vedere i suggerimenti.",
+      "actions.close": "Chiudi applicazione",
+      "modal.title": "Esporta risultati",
+      "modal.subtitle": "Scegli un formato:",
+      "modal.cancel": "Annulla",
+      "results.brief.title": "Riepilogo breve",
+      "results.extensive.title": "Diagnostica estesa",
+      "section.os": "Sistema operativo",
+      "section.cpu": "CPU (Processore)",
+      "section.ram": "Moduli RAM",
+      "section.gpu": "GPU (Scheda video)",
+      "section.internet": "Internet",
+      "section.network": "Rete",
+      "section.system": "Impostazioni di sistema",
+      "section.process": "Processo",
+      "section.app": "App",
+      "section.work": "Preparazione",
+      "section.cli": "Strumenti CLI",
+      "section.software": "Software/IDE installati",
+      "section.dependencies": "Strumenti e linguaggi",
+      "section.suggestions": "Suggerimenti",
+      "label.version": "versione",
+      "label.release": "release",
+      "label.arch": "architettura",
+      "label.hostname": "nome host",
+      "label.ip": "ip",
+      "label.updateStatus": "stato aggiornamenti",
+      "label.vendor": "fornitore",
+      "label.model": "modello",
+      "label.cores": "core",
+      "label.installed": "installato",
+      "label.totalSpeed": "velocitÃƒÆ’Ã‚Â  totale",
+      "label.voltage": "voltaggio",
+      "label.loadAvg": "carico medio",
+      "label.total": "totale",
+      "label.used": "usato",
+      "label.free": "libero",
+      "label.intellijCap": "limite IntelliJ",
+      "label.altIdeCaps": "Limiti IDE alternativi",
+      "label.driver": "driver",
+      "label.speed": "velocitÃƒÆ’Ã‚Â ",
+      "label.test": "test",
+      "label.download": "download",
+      "label.upload": "upload",
+      "label.ping": "ping",
+      "label.status": "stato",
+      "label.gateway": "gateway",
+      "label.routerFirmware": "firmware del router",
+      "label.wifi": "wifi",
+      "label.signal": "segnale",
+      "label.lan": "lan",
+      "label.power": "energia",
+      "label.name": "nome",
+      "label.electron": "electron",
+      "label.node": "node",
+      "label.chrome": "chrome",
+      "label.javaHome": "java home",
+      "label.platform": "piattaforma",
+      "label.missingEssentials": "essenziali mancanti",
+      "brief.os": "OS",
+      "brief.arch": "arch",
+      "brief.cpu": "CPU",
+      "brief.ram": "RAM",
+      "brief.gpu": "GPU",
+      "brief.internet": "Internet",
+      "brief.cli": "Strumenti CLI",
+      "brief.software": "Software/IDE",
+      "brief.dependencies": "Strumenti e linguaggi",
+      "brief.missing": "Essenziali mancanti",
+      "note.skipped": "saltato (esegui l'analisi estesa per il test di velocitÃƒÆ’Ã‚Â )",
+      "note.optimization.disabled": "Controlli di ottimizzazione disabilitati.",
+      "note.noDiagnostics": "Nessuna diagnostica disponibile.",
+      "note.noIssues": "Nessun problema immediato trovato. Il sistema sembra sano.",
+      "note.potential": "Miglioramento potenziale (stima): {min}-{max}%.",
+      "note.missing.none": "nessuno",
+      "note.na": "n/a",
+      "suggest.checklist.brief": "Checklist iniziale: verifica che gli strumenti essenziali siano installati e che i build funzionino.",
+      "suggest.checklist.extensive": "Checklist prestazioni massime: concentrati sui passaggi che migliorano velocitÃƒÆ’Ã‚Â  ed efficienza.",
+      "suggest.memory.low": "Poca memoria libera: chiudi app inutilizzate o riavvia per liberare RAM.",
+      "suggest.memory.veryHigh": "Uso RAM >= 90%: chiudi app pesanti, metti in pausa i build o aumenta la RAM.",
+      "suggest.memory.high": "Uso RAM >= 80%: valuta di chiudere app o aumentare RAM se frequente.",
+      "suggest.memory.reserve": "Mantieni 20% di RAM libera per cache e OS; 10% ÃƒÆ’Ã‚Â¨ il minimo per evitare rallentamenti.",
+      "suggest.cpu.high": "Carico CPU alto: controlla Gestione attivitÃƒÆ’Ã‚Â  per processi pesanti.",
+      "suggest.internet.failed": "Test Internet fallito: verifica la connessione o il firewall.",
+      "suggest.internet.latency": "Alta latenza Internet: prova un'altra rete o riavvia il router.",
+      "suggest.os.updates": "Aggiornamenti macOS disponibili: installa gli ultimi aggiornamenti.",
+      "suggest.gpu.full": "Esegui la diagnostica completa per includere GPU e dettagli di processo.",
+      "suggest.ide.cap": "Limite IDE JetBrains rilevato: aumenta l'heap se le prestazioni sono lente.",
+      "suggest.wifi.weak": "Segnale Wi-Fi debole (<60%): avvicinati al router o usa Ethernet.",
+      "suggest.wifi.weakRssi": "Segnale Wi-Fi debole (RSSI basso): avvicinati al router o usa Ethernet.",
+      "suggest.power.plan": "Piano energia non ad alte prestazioni: passa a Prestazioni elevate durante sviluppo/build.",
+      "suggest.vscode.extensions": "VS Code: disattiva estensioni inutilizzate ed escludi cartelle build/output dal monitoraggio e ricerca.",
+      "suggest.jetbrains.tune": "JetBrains IDE: disattiva plugin inutili, escludi l'output build dall'indicizzazione e aumenta l'heap se necessario.",
+      "suggest.vs.parallel": "Visual Studio: abilita build parallele e scarica progetti non usati per ridurre i tempi di caricamento.",
+      "suggest.xcode.derived": "Xcode: pulisci DerivedData quando indicizzazione o build rallentano.",
+      "suggest.android.accel": "Android Studio: abilita accelerazione hardware dell'emulatore e mantieni la cache Gradle su storage veloce.",
+      "suggest.node.lts": "Node.js: usa l'ultima LTS e mantieni le dipendenze su SSD.",
+      "suggest.ts.incremental": "TypeScript: abilita build incrementali o riferimenti di progetto per codebase grandi.",
+      "suggest.python.venv": "Python: usa ambienti virtuali per tenere le installazioni isolate e veloci.",
+      "suggest.java.lts": "Java: usa un JDK LTS recente e abilita cache di build (Gradle/Maven).",
+      "suggest.docker.windows": "Docker Desktop (Windows): usa backend WSL2 e regola i limiti CPU/RAM.",
+      "suggest.docker.mac": "Docker Desktop (macOS): regola limiti CPU/RAM e file sharing (VirtioFS se disponibile).",
+      "checklist.osDrivers": "Aggiorna OS e driver (GPU, chipset, Wi-Fi/LAN) alle ultime versioni stabili.",
+      "checklist.powerPlan": "Usa un piano energia ad alte prestazioni durante sviluppo o build.",
+      "checklist.startupApps": "Disattiva app di avvio e servizi in background non usati.",
+      "checklist.diskSpace": "Mantieni almeno il 20% di spazio libero; pulisci il disco e rimuovi file temporanei grandi.",
+      "checklist.ssd": "Preferisci SSD per i progetti; evita build pesanti su dischi esterni lenti.",
+      "checklist.visualEffects": "Riduci effetti visivi/animazioni per una UI piÃƒÆ’Ã‚Â¹ reattiva.",
+      "checklist.antivirus": "Escludi le cartelle di progetto (node_modules, build, dist) dalla scansione antivirus in tempo reale.",
+      "checklist.wifi": "Usa Ethernet o Wi-Fi 5GHz forte; aggiorna il firmware del router e riavvia periodicamente.",
+      "checklist.dns": "Imposta DNS veloce e verifica bassa latenza per i download.",
+      "checklist.browser": "Limita le schede del browser e chiudi app pesanti durante i build.",
+      "checklist.hwAccel": "Abilita accelerazione hardware dove supportato (browser/IDE).",
+      "checklist.cliTools": "Mantieni gli strumenti CLI aggiornati (Node.js, npm, Git, Docker, Java).",
+      "checklist.reboot": "Riavvia dopo aggiornamenti importanti per pulire i processi."
+    }
+  },
+  pl: {
+    dir: "ltr",
+    strings: {
+      "app.title": "Developer Diagnostics Kit",
+      "app.badge": "Windows + macOS",
+      "platform.windows": "Windows",
+      "platform.macos": "macOS",
+      "language.title": "Wybierz jezyk",
+      "language.subtitle": "Mozemy automatycznie wykryc na podstawie regionu.",
+      "language.auto": "Wykryj jezyk automatycznie",
+      "language.manual": "Lub wybierz recznie",
+      "language.continue": "Kontynuuj",
+      "language.status.idle": "Oczekiwanie.",
+      "language.status.detecting": "Wykrywanie jezyka...",
+      "language.status.detected": "Wykryto: {language}.",
+      "language.status.failed": "Nie udalo sie wykryc jezyka.",
+      "language.label.enGB": "Angielski (UK)",
+      "language.label.nl": "Niderlandzki",
+      "language.label.hi": "ÃƒÂ Ã‚Â¤Ã‚Â¹ÃƒÂ Ã‚Â¤Ã‚Â¿ÃƒÂ Ã‚Â¤Ã‚Â¨ÃƒÂ Ã‚Â¥Ã‚ÂÃƒÂ Ã‚Â¤Ã‚Â¦ÃƒÂ Ã‚Â¥Ã¢â€šÂ¬",
+      "language.label.ar": "ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â±ÃƒËœÃ‚Â¨Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â©",
+      "language.label.pl": "Polski",
+      "language.label.uk": "Ukrainski",
+      "language.label.fr": "Francuski",
+      "language.label.pt": "Portugalski",
+      "language.label.es": "Hiszpanski",
+      "language.label.it": "Wloski",
+      "language.label.id": "Indonezyjski",
+      "setup.title": "Instalacja",
+      "setup.note": "Instaluje zaleznosci deweloperskie projektu i uruchamia aplikacje dev. Potrzebne tylko przy uruchamianiu ze zrodel.",
+      "setup.list.install": "Uruchomi: npm install",
+      "setup.list.start": "Uruchomi: npm start",
+      "setup.install": "Zainstaluj zaleznosci",
+      "setup.start": "Uruchom aplikacje",
+      "setup.status.waiting": "Oczekiwanie.",
+      "setup.status.installing": "Instalowanie...",
+      "setup.status.starting": "Uruchamianie...",
+      "setup.status.done": "Gotowe.",
+      "mode.title": "Tryb testu",
+      "mode.brief": "Krotki",
+      "mode.extensive": "Rozszerzony",
+      "extras.title": "Dodatki",
+      "extras.software": "Oprogramowanie/IDE",
+      "extras.dependencies": "Narzedzia i jezyki",
+      "extras.optimization": "Uwzglednij kontrole optymalizacji",
+      "actions.run": "Uruchom diagnostyke",
+      "status.ready": "Gotowe.",
+      "status.running": "Uruchamianie diagnostyki {mode}...",
+      "status.complete": "Diagnostyka {mode} zakonczona.",
+      "status.failed": "Diagnostyka nieudana.",
+      "status.wrapping": "Finalizowanie...",
+      "status.exporting": "Zapisywanie {format}...",
+      "status.export.complete": "Eksport zakonczony.",
+      "status.export.canceled": "Eksport anulowany.",
+      "status.export.failed": "Eksport nieudany.",
+      "progress.title": "Uruchamianie diagnostyki...",
+      "progress.preparing": "Przygotowanie kontroli.",
+      "progress.running": "Uruchamianie kontroli {mode}...",
+      "results.button": "Wyniki",
+      "results.title": "Wyniki",
+      "results.placeholder": "Uruchom diagnostyke, aby zobaczyc wyniki.",
+      "export.title": "Eksportuj wyniki",
+      "export.button": "Eksportuj wyniki",
+      "export.previous": "Wstecz",
+      "results.status.ready": "Gotowe.",
+      "results.status.running": "W toku...",
+      "results.status.complete": "Zakonczono.",
+      "results.status.failed": "Nieudane.",
+      "suggestions.title": "Sugestie optymalizacji",
+      "suggestions.placeholder": "Uruchom diagnostyke, aby zobaczyc sugestie.",
+      "actions.close": "Zamknij aplikacje",
+      "modal.title": "Eksportuj wyniki",
+      "modal.subtitle": "Wybierz format:",
+      "modal.cancel": "Anuluj",
+      "results.brief.title": "Krotki przeglad",
+      "results.extensive.title": "Rozszerzona diagnostyka",
+      "section.os": "System operacyjny",
+      "section.cpu": "CPU (Procesor)",
+      "section.ram": "Moduly RAM",
+      "section.gpu": "GPU (Karta graficzna)",
+      "section.internet": "Internet",
+      "section.network": "Siec",
+      "section.system": "Ustawienia systemu",
+      "section.process": "Proces",
+      "section.app": "Aplikacja",
+      "section.work": "Gotowosc do pracy",
+      "section.cli": "NarzÃƒâ€žÃ¢â€žÂ¢dzia CLI",
+      "section.software": "Oprogramowanie/IDE zainstalowane",
+      "section.dependencies": "Narzedzia i jezyki",
+      "section.suggestions": "Sugestie",
+      "label.version": "wersja",
+      "label.release": "release",
+      "label.arch": "architektura",
+      "label.hostname": "nazwa hosta",
+      "label.ip": "ip",
+      "label.updateStatus": "status aktualizacji",
+      "label.vendor": "producent",
+      "label.model": "model",
+      "label.cores": "rdzenie",
+      "label.installed": "zainstalowane",
+      "label.totalSpeed": "laczna predkosc",
+      "label.voltage": "napiecie",
+      "label.loadAvg": "srednie obciazenie",
+      "label.total": "calkowite",
+      "label.used": "uzyte",
+      "label.free": "wolne",
+      "label.intellijCap": "limit IntelliJ",
+      "label.altIdeCaps": "Alternatywne limity IDE",
+      "label.driver": "sterownik",
+      "label.speed": "predkosc",
+      "label.test": "test",
+      "label.download": "pobieranie",
+      "label.upload": "wysylanie",
+      "label.ping": "ping",
+      "label.status": "status",
+      "label.gateway": "brama",
+      "label.routerFirmware": "firmware routera",
+      "label.wifi": "wifi",
+      "label.signal": "sygnal",
+      "label.lan": "lan",
+      "label.power": "zasilanie",
+      "label.name": "nazwa",
+      "label.electron": "electron",
+      "label.node": "node",
+      "label.chrome": "chrome",
+      "label.javaHome": "java home",
+      "label.platform": "platforma",
+      "label.missingEssentials": "brakujace podstawy",
+      "brief.os": "OS",
+      "brief.arch": "arch",
+      "brief.cpu": "CPU",
+      "brief.ram": "RAM",
+      "brief.gpu": "GPU",
+      "brief.internet": "Internet",
+      "brief.cli": "NarzÃƒâ€žÃ¢â€žÂ¢dzia CLI",
+      "brief.software": "Oprogramowanie/IDE",
+      "brief.dependencies": "Narzedzia i jezyki",
+      "brief.missing": "Brakujace podstawy",
+      "note.skipped": "pominiete (uruchom rozszerzona analize dla testu predkosci)",
+      "note.optimization.disabled": "Kontrole optymalizacji wylaczone.",
+      "note.noDiagnostics": "Brak diagnostyki.",
+      "note.noIssues": "Nie znaleziono pilnych problemow. System wyglada zdrowo.",
+      "note.potential": "Potencjalna poprawa (szacunek): {min}-{max}%.",
+      "note.missing.none": "brak",
+      "note.na": "n/a",
+      "suggest.checklist.brief": "Lista startowa: upewnij sie, ze podstawowe narzedzia sa zainstalowane i buildy dzialaja.",
+      "suggest.checklist.extensive": "Lista max wydajnosci: skup sie na krokach poprawiajacych szybkosc i wydajnosc.",
+      "suggest.memory.low": "Malo wolnej pamieci: zamknij nieuzywane aplikacje lub uruchom ponownie, aby zwolnic RAM.",
+      "suggest.memory.veryHigh": "Zuzycie RAM >= 90%: zamknij ciezkie aplikacje, wstrzymaj buildy lub zwieksz RAM.",
+      "suggest.memory.high": "Zuzycie RAM >= 80%: rozwaz zamkniecie aplikacji lub zwiekszenie RAM, jesli to czeste.",
+      "suggest.memory.reserve": "Utrzymuj 20% wolnego RAM na cache i zadania OS; 10% to minimum bez spowolnien.",
+      "suggest.cpu.high": "Wysokie obciazenie CPU: sprawdz Menedzer zadan pod katem ciezkich procesow.",
+      "suggest.internet.failed": "Test Internetu nieudany: sprawdz polaczenie lub zapore.",
+      "suggest.internet.latency": "Wysoka latencja Internetu: zmien siec lub zrestartuj router.",
+      "suggest.os.updates": "Dostepne aktualizacje macOS: zainstaluj najnowsze.",
+      "suggest.gpu.full": "Uruchom pelna diagnostyke, aby uwzglednic GPU i procesy.",
+      "suggest.ide.cap": "Wykryto limit IDE JetBrains: zwieksz heap, jesli wydajnosc jest niska.",
+      "suggest.wifi.weak": "Slaby sygnal Wi-Fi (<60%): zbliz sie do routera lub uzyj Ethernet.",
+      "suggest.wifi.weakRssi": "Slaby sygnal Wi-Fi (niski RSSI): zbliz sie do routera lub uzyj Ethernet.",
+      "suggest.power.plan": "Plan zasilania nie jest na wysokiej wydajnosci: przelacz na Wysoka/Best Performance podczas pracy.",
+      "suggest.vscode.extensions": "VS Code: wylacz nieuzywane rozszerzenia i wyklucz foldery build/output z monitorowania i wyszukiwania.",
+      "suggest.jetbrains.tune": "JetBrains IDE: wylacz nieuzywane pluginy, wyklucz output z indeksowania i zwieksz heap w razie potrzeby.",
+      "suggest.vs.parallel": "Visual Studio: wlacz kompilacje rownolegle i wyladuj nieuzywane projekty, aby skrocic czas ladowania.",
+      "suggest.xcode.derived": "Xcode: wyczysc DerivedData, gdy indeksowanie lub buildy spowalniaja.",
+      "suggest.android.accel": "Android Studio: wlacz akceleracje sprzetowa emulatora i trzymaj cache Gradle na szybkim dysku.",
+      "suggest.node.lts": "Node.js: uzywaj najnowszej LTS i trzymaj zaleznosci na SSD.",
+      "suggest.ts.incremental": "TypeScript: wlacz buildy inkrementalne lub referencje projektow dla duzych codebase.",
+      "suggest.python.venv": "Python: uzywaj srodowisk wirtualnych, by izolowac instalacje.",
+      "suggest.java.lts": "Java: uzywaj aktualnego JDK LTS i wlacz cache buildow (Gradle/Maven).",
+      "suggest.docker.windows": "Docker Desktop (Windows): uzywaj backendu WSL2 i dostosuj limity CPU/RAM.",
+      "suggest.docker.mac": "Docker Desktop (macOS): dostosuj limity CPU/RAM i udostepnianie plikow (VirtioFS jesli dostepne).",
+      "checklist.osDrivers": "Zaktualizuj OS i sterowniki (GPU, chipset, Wi-Fi/LAN) do najnowszych stabilnych wersji.",
+      "checklist.powerPlan": "Uzywaj planu Wysoka/Best Performance podczas pracy lub buildow.",
+      "checklist.startupApps": "Wylacz aplikacje startowe i uslugi w tle, ktorych nie uzywasz.",
+      "checklist.diskSpace": "Zostaw co najmniej 20% wolnego miejsca; czysc dysk i usuwaj duze pliki tymczasowe.",
+      "checklist.ssd": "Preferuj SSD dla projektow; unikaj ciezkich buildow na wolnych dyskach zewnetrznych.",
+      "checklist.visualEffects": "Zmniejsz efekty wizualne/animacje dla szybszego UI.",
+      "checklist.antivirus": "Wyklucz foldery projektu (node_modules, build, dist) z ochrony antywirusowej na zywo.",
+      "checklist.wifi": "Uzywaj Ethernetu lub mocnego Wi-Fi 5GHz; aktualizuj firmware routera i restartuj okresowo.",
+      "checklist.dns": "Ustaw szybki DNS i sprawdz niska latencje pobierania.",
+      "checklist.browser": "Ogranicz karty przegladarki i zamykaj ciezkie aplikacje podczas buildow.",
+      "checklist.hwAccel": "Wlacz akceleracje sprzetowa tam, gdzie to wspierane (przegladarka/IDE).",
+      "checklist.cliTools": "Aktualizuj narzedzia CLI (Node.js, npm, Git, Docker, Java).",
+      "checklist.reboot": "Restartuj po duzych aktualizacjach, aby wyczyscic procesy."
+    }
+  },
+  uk: {
+    dir: "ltr",
+    strings: {
+      "app.title": "Developer Diagnostics Kit",
+      "app.badge": "Windows + macOS",
+      "platform.windows": "Windows",
+      "platform.macos": "macOS",
+      "language.title": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â±ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã†â€™",
+      "language.subtitle": "ÃƒÂÃ…â€œÃƒÂÃ‚Â¾ÃƒÂÃ‚Â¶ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¼ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â·ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â° Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â³Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¾ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â¼.",
+      "language.auto": "ÃƒÂÃ‚ÂÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â·ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸",
+      "language.manual": "ÃƒÂÃ‚ÂÃƒÂÃ‚Â±ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â±ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â½Ãƒâ€˜Ã†â€™",
+      "language.continue": "ÃƒÂÃ…Â¸Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¶ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸",
+      "language.status.idle": "ÃƒÂÃ…Â¾Ãƒâ€˜Ã¢â‚¬Â¡Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â.",
+      "language.status.detecting": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â·ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸...",
+      "language.status.detected": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â·ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾: {language}.",
+      "language.status.failed": "ÃƒÂÃ‚ÂÃƒÂÃ‚Âµ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã‚Â ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â·ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã†â€™.",
+      "language.label.enGB": "ÃƒÂÃ‚ÂÃƒÂÃ‚Â½ÃƒÂÃ‚Â³ÃƒÂÃ‚Â»Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¹Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒÂÃ‚Â° (UK)",
+      "language.label.nl": "ÃƒÂÃ‚ÂÃƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â´ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â´Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°",
+      "language.label.hi": "ÃƒÂ Ã‚Â¤Ã‚Â¹ÃƒÂ Ã‚Â¤Ã‚Â¿ÃƒÂ Ã‚Â¤Ã‚Â¨ÃƒÂ Ã‚Â¥Ã‚ÂÃƒÂ Ã‚Â¤Ã‚Â¦ÃƒÂ Ã‚Â¥Ã¢â€šÂ¬",
+      "language.label.ar": "ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â±ÃƒËœÃ‚Â¨Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â©",
+      "language.label.pl": "ÃƒÂÃ…Â¸ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°",
+      "language.label.uk": "ÃƒÂÃ‚Â£ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬â€ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°",
+      "language.label.fr": "ÃƒÂÃ‚Â¤Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â·Ãƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°",
+      "language.label.pt": "ÃƒÂÃ…Â¸ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â³ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°",
+      "language.label.es": "ÃƒÂÃ¢â‚¬Â Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¿ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°",
+      "language.label.it": "ÃƒÂÃ¢â‚¬Â Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¹Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°",
+      "language.label.id": "ÃƒÂÃ¢â‚¬Â ÃƒÂÃ‚Â½ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â½ÃƒÂÃ‚ÂµÃƒÂÃ‚Â·Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¹Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°",
+      "setup.title": "ÃƒÂÃ¢â‚¬â„¢Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â",
+      "setup.note": "ÃƒÂÃ¢â‚¬â„¢Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»Ãƒâ€˜Ã…Â½Ãƒâ€˜Ã¢â‚¬Â dev-ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¶ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬ÂÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™ Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â° ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂºÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â dev-ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Âº. ÃƒÂÃ…Â¸ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â±ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â»ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™ ÃƒÂÃ‚Â· ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¶ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â».",
+      "setup.list.install": "ÃƒÂÃ¢â‚¬â€ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™: npm install",
+      "setup.list.start": "ÃƒÂÃ¢â‚¬â€ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™: npm start",
+      "setup.install": "ÃƒÂÃ¢â‚¬â„¢Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¶ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œ",
+      "setup.start": "ÃƒÂÃ¢â‚¬â€ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Âº",
+      "setup.status.waiting": "ÃƒÂÃ…Â¾Ãƒâ€˜Ã¢â‚¬Â¡Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â.",
+      "setup.status.installing": "ÃƒÂÃ¢â‚¬â„¢Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â...",
+      "setup.status.starting": "ÃƒÂÃ¢â‚¬â€ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Âº...",
+      "setup.status.done": "ÃƒÂÃ¢â‚¬Å“ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¾.",
+      "mode.title": "ÃƒÂÃ‚Â ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¶ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼ Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™",
+      "mode.brief": "ÃƒÂÃ…Â¡ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹",
+      "mode.extensive": "ÃƒÂÃ‚Â ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â·Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹",
+      "extras.title": "ÃƒÂÃ¢â‚¬ÂÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¾",
+      "extras.software": "ÃƒÂÃ…Â¸ÃƒÂÃ¢â‚¬â€/IDE",
+      "extras.dependencies": "ÃƒÂÃ¢â‚¬Â ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â¹ ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸",
+      "extras.optimization": "ÃƒÂÃ‚Â£ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂºÃƒÂÃ‚Â½Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â·ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬â€",
+      "actions.run": "ÃƒÂÃ¢â‚¬â€ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â°ÃƒÂÃ‚Â³ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™",
+      "status.ready": "ÃƒÂÃ¢â‚¬Å“ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¾.",
+      "status.running": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾ÃƒÂÃ‚Â½Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â‚¬ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã‚Â {mode} ÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â°ÃƒÂÃ‚Â³ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°...",
+      "status.complete": "{mode} ÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â°ÃƒÂÃ‚Â³ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾.",
+      "status.failed": "ÃƒÂÃ¢â‚¬ÂÃƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â°ÃƒÂÃ‚Â³ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â° ÃƒÂÃ‚Â½ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã‚Â.",
+      "status.wrapping": "ÃƒÂÃ¢â‚¬â€ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â...",
+      "status.exporting": "ÃƒÂÃ¢â‚¬â€ÃƒÂÃ‚Â±ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¶ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â {format}...",
+      "status.export.complete": "ÃƒÂÃ¢â‚¬Â¢ÃƒÂÃ‚ÂºÃƒâ€˜Ã‚ÂÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Å¡ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾.",
+      "status.export.canceled": "ÃƒÂÃ¢â‚¬Â¢ÃƒÂÃ‚ÂºÃƒâ€˜Ã‚ÂÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Å¡ Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂºÃƒÂÃ‚Â°Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾.",
+      "status.export.failed": "ÃƒÂÃ¢â‚¬Â¢ÃƒÂÃ‚ÂºÃƒâ€˜Ã‚ÂÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Å¡ ÃƒÂÃ‚Â½ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã‚Â.",
+      "progress.title": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â ÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â°ÃƒÂÃ‚Â³ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸...",
+      "progress.preparing": "ÃƒÂÃ…Â¸Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â´ÃƒÂÃ‚Â³ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂºÃƒÂÃ‚Â° ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Âº.",
+      "progress.running": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Âº {mode}...",
+      "results.button": "ÃƒÂÃ‚Â ÃƒÂÃ‚ÂµÃƒÂÃ‚Â·Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸",
+      "results.title": "ÃƒÂÃ‚Â ÃƒÂÃ‚ÂµÃƒÂÃ‚Â·Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸",
+      "results.placeholder": "ÃƒÂÃ¢â‚¬â€ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â°ÃƒÂÃ‚Â³ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™, Ãƒâ€˜Ã¢â‚¬Â°ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â± ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â±ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â·Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸.",
+      "export.title": "ÃƒÂÃ¢â‚¬Â¢ÃƒÂÃ‚ÂºÃƒâ€˜Ã‚ÂÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Å¡ Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â·Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â²",
+      "export.button": "ÃƒÂÃ¢â‚¬Â¢ÃƒÂÃ‚ÂºÃƒâ€˜Ã‚ÂÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Å¡ Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â·Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â²",
+      "export.previous": "ÃƒÂÃ‚ÂÃƒÂÃ‚Â°ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â´",
+      "results.status.ready": "ÃƒÂÃ¢â‚¬Å“ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¾.",
+      "results.status.running": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾ÃƒÂÃ‚Â½Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â‚¬ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã‚Â...",
+      "results.status.complete": "ÃƒÂÃ¢â‚¬â€ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾.",
+      "results.status.failed": "ÃƒÂÃ‚ÂÃƒÂÃ‚Âµ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã‚Â.",
+      "suggestions.title": "ÃƒÂÃ…Â¸Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â·ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬â€ ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â·ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬â€",
+      "suggestions.placeholder": "ÃƒÂÃ¢â‚¬â€ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â°ÃƒÂÃ‚Â³ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™, Ãƒâ€˜Ã¢â‚¬Â°ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â± ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â±ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â·ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬â€.",
+      "actions.close": "ÃƒÂÃ¢â‚¬â€ÃƒÂÃ‚Â°ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Âº",
+      "modal.title": "ÃƒÂÃ¢â‚¬Â¢ÃƒÂÃ‚ÂºÃƒâ€˜Ã‚ÂÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Å¡ Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â·Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â²",
+      "modal.subtitle": "ÃƒÂÃ…Â¾ÃƒÂÃ‚Â±ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ Ãƒâ€˜Ã¢â‚¬Å¾ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡:",
+      "modal.cancel": "ÃƒÂÃ‚Â¡ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã†â€™ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸",
+      "results.brief.title": "ÃƒÂÃ…Â¡ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹ ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â³ÃƒÂÃ‚Â»Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â´",
+      "results.extensive.title": "ÃƒÂÃ‚Â ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â·Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â° ÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â°ÃƒÂÃ‚Â³ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°",
+      "section.os": "ÃƒÂÃ…Â¾ÃƒÂÃ‚Â¡",
+      "section.cpu": "CPU (ÃƒÂÃ…Â¸Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Â ÃƒÂÃ‚ÂµÃƒâ€˜Ã‚ÂÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬)",
+      "section.ram": "ÃƒÂÃ…â€œÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â»Ãƒâ€˜Ã¢â‚¬â€œ RAM",
+      "section.gpu": "GPU (ÃƒÂÃ¢â‚¬â„¢Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â´ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¾ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°)",
+      "section.internet": "ÃƒÂÃ¢â‚¬Â ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â½ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â‚¬Å¡",
+      "section.network": "ÃƒÂÃ…â€œÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¶ÃƒÂÃ‚Â°",
+      "section.system": "ÃƒÂÃ‚ÂÃƒÂÃ‚Â°ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°Ãƒâ€˜Ã‹â€ Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¼ÃƒÂÃ‚Â¸",
+      "section.process": "ÃƒÂÃ…Â¸Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Â ÃƒÂÃ‚ÂµÃƒâ€˜Ã‚Â",
+      "section.app": "ÃƒÂÃ¢â‚¬ÂÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Âº",
+      "section.work": "ÃƒÂÃ¢â‚¬Å“ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸",
+      "section.cli": "CLI-Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â½Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸",
+      "section.software": "ÃƒÂÃ¢â‚¬â„¢Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ…Â¸ÃƒÂÃ¢â‚¬â€/IDE",
+      "section.dependencies": "ÃƒÂÃ¢â‚¬Â ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â¹ ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸",
+      "section.suggestions": "ÃƒÂÃ…Â¸Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â·ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬â€",
+      "label.version": "ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã‚Â",
+      "label.release": "release",
+      "label.arch": "ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Â¦Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°",
+      "label.hostname": "Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¼'Ãƒâ€˜Ã‚Â Ãƒâ€˜Ã¢â‚¬Â¦ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°",
+      "label.ip": "ip",
+      "label.updateStatus": "Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã…â€™",
+      "label.vendor": "ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â±ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸ÃƒÂÃ‚Âº",
+      "label.model": "ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´ÃƒÂÃ‚ÂµÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™",
+      "label.cores": "Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°",
+      "label.installed": "ÃƒÂÃ‚Â²Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾",
+      "label.totalSpeed": "ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â³ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½ÃƒÂÃ‚Â° Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â´ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™",
+      "label.voltage": "ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â³ÃƒÂÃ‚Â°",
+      "label.loadAvg": "Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â´ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Â ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¶ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â",
+      "label.total": "Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã…â€™ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â³ÃƒÂÃ‚Â¾",
+      "label.used": "ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾",
+      "label.free": "ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾",
+      "label.intellijCap": "ÃƒÂÃ‚Â»Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¼Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡ IntelliJ",
+      "label.altIdeCaps": "ÃƒÂÃ‚ÂÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â²ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â»Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¼Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ IDE",
+      "label.driver": "ÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬",
+      "label.speed": "Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â´ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™",
+      "label.test": "Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡",
+      "label.download": "ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¶ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â",
+      "label.upload": "ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¶ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â",
+      "label.ping": "ping",
+      "label.status": "Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚Â",
+      "label.gateway": "Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â»Ãƒâ€˜Ã…Â½ÃƒÂÃ‚Â·",
+      "label.routerFirmware": "ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂºÃƒÂÃ‚Â° Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°",
+      "label.wifi": "wifi",
+      "label.signal": "Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¸ÃƒÂÃ‚Â³ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»",
+      "label.lan": "lan",
+      "label.power": "ÃƒÂÃ‚Â¶ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â",
+      "label.name": "ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°ÃƒÂÃ‚Â·ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°",
+      "label.electron": "electron",
+      "label.node": "node",
+      "label.chrome": "chrome",
+      "label.javaHome": "java home",
+      "label.platform": "ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬Å¾ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â°",
+      "label.missingEssentials": "ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â´Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ",
+      "brief.os": "OS",
+      "brief.arch": "arch",
+      "brief.cpu": "CPU",
+      "brief.ram": "RAM",
+      "brief.gpu": "GPU",
+      "brief.internet": "Internet",
+      "brief.cli": "CLI-Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â½Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸",
+      "brief.software": "ÃƒÂÃ…Â¸ÃƒÂÃ¢â‚¬â€/IDE",
+      "brief.dependencies": "ÃƒÂÃ¢â‚¬Â ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â¹ ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸",
+      "brief.missing": "ÃƒÂÃ¢â‚¬â„¢Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â´Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ",
+      "note.skipped": "ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â‚¬Â°ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ (ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â·Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã†â€™ ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â»Ãƒâ€˜Ã‚Â Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™ Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â´ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œ)",
+      "note.optimization.disabled": "ÃƒÂÃ…Â¸ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â·ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬â€ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂºÃƒÂÃ‚Â½ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾.",
+      "note.noDiagnostics": "ÃƒÂÃ‚ÂÃƒÂÃ‚ÂµÃƒÂÃ‚Â¼ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬â€ ÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â°ÃƒÂÃ‚Â³ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸.",
+      "note.noIssues": "ÃƒÂÃ‚ÂÃƒÂÃ‚ÂµÃƒÂÃ‚Â³ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Â¦ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â±ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¼ ÃƒÂÃ‚Â½ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â²ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾. ÃƒÂÃ‚Â¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¼ÃƒÂÃ‚Â° ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â³ÃƒÂÃ‚Â»Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â´ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â ÃƒÂÃ‚Â·ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¾Ãƒâ€˜Ã…Â½.",
+      "note.potential": "ÃƒÂÃ…Â¸ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¹ÃƒÂÃ‚Â½ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â°ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â (ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â½ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°): {min}-{max}%.",
+      "note.missing.none": "ÃƒÂÃ‚Â½ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¼ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â",
+      "note.na": "n/a",
+      "suggest.checklist.brief": "ÃƒÂÃ‚Â¡Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹ Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¾ÃƒÂÃ‚Âº: ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ, Ãƒâ€˜Ã¢â‚¬Â°ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â½Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â²Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã…Â½Ãƒâ€˜Ã…Â½Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™.",
+      "suggest.checklist.extensive": "ÃƒÂÃ…â€œÃƒÂÃ‚Â°ÃƒÂÃ‚ÂºÃƒâ€˜Ã‚ÂÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½ÃƒÂÃ‚Â° ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´Ãƒâ€˜Ã†â€™ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â²ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™: Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¾ÃƒÂÃ‚Â¾ÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã†â€™ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã‚ÂÃƒâ€˜Ã‚Â ÃƒÂÃ‚Â½ÃƒÂÃ‚Â° ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â¦, Ãƒâ€˜Ã¢â‚¬Â°ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â°Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã…Â½Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â´ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â‚¬Å¾ÃƒÂÃ‚ÂµÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â²ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™.",
+      "suggest.memory.low": "ÃƒÂÃ…â€œÃƒÂÃ‚Â°ÃƒÂÃ‚Â»ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬â€ ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¼'Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œ: ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â°ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™, Ãƒâ€˜Ã¢â‚¬Â°ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â± ÃƒÂÃ‚Â·ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ RAM.",
+      "suggest.memory.veryHigh": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â RAM >= 90%: ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¶ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸, ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â·Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â°ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã‹â€ Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ RAM.",
+      "suggest.memory.high": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â RAM >= 80%: Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â·ÃƒÂÃ‚Â³ÃƒÂÃ‚Â»Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â½Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã‚Â ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â² ÃƒÂÃ‚Â°ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â RAM, Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Â°ÃƒÂÃ‚Â¾ Ãƒâ€˜Ã¢â‚¬Â ÃƒÂÃ‚Âµ Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â°Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾.",
+      "suggest.memory.reserve": "ÃƒÂÃ‚Â¢Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ 20% RAM ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â»Ãƒâ€˜Ã‚Â ÃƒÂÃ‚ÂºÃƒÂÃ‚ÂµÃƒâ€˜Ã‹â€ Ãƒâ€˜Ã†â€™ ÃƒÂÃ‚Â¹ ÃƒÂÃ…Â¾ÃƒÂÃ‚Â¡; 10% ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ÃƒÂÃ‚Â¼Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¼Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¼ ÃƒÂÃ‚Â±ÃƒÂÃ‚ÂµÃƒÂÃ‚Â· Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã…â€™.",
+      "suggest.cpu.high": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¾ÃƒÂÃ‚ÂºÃƒÂÃ‚Âµ ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¶ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â CPU: ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ¢â‚¬ÂÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â½ÃƒÂÃ‚Â° ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¶ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Â ÃƒÂÃ‚ÂµÃƒâ€˜Ã‚ÂÃƒÂÃ‚Â¸.",
+      "suggest.internet.failed": "ÃƒÂÃ…Â¸ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂºÃƒÂÃ‚Â° Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â½ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™ ÃƒÂÃ‚Â½ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã‚Â: ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â·'Ãƒâ€˜Ã¢â‚¬ÂÃƒÂÃ‚Â´ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â ÃƒÂÃ‚Â°ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¾ Ãƒâ€˜Ã¢â‚¬Å¾ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬ÂÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â».",
+      "suggest.internet.latency": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¾ÃƒÂÃ‚ÂºÃƒÂÃ‚Â° ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂºÃƒÂÃ‚Â° Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â½ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™: Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â±Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â½Ãƒâ€˜Ã‹â€ Ãƒâ€˜Ã†â€™ ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¶Ãƒâ€˜Ã†â€™ ÃƒÂÃ‚Â°ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬.",
+      "suggest.os.updates": "ÃƒÂÃ¢â‚¬ÂÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â macOS: ÃƒÂÃ‚Â²Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â.",
+      "suggest.gpu.full": "ÃƒÂÃ¢â‚¬â€ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â½Ãƒâ€˜Ã†â€™ ÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â°ÃƒÂÃ‚Â³ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™, Ãƒâ€˜Ã¢â‚¬Â°ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â± ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂºÃƒÂÃ‚Â»Ãƒâ€˜Ã…Â½Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ GPU Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â° ÃƒÂÃ‚Â´ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Â ÃƒÂÃ‚ÂµÃƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â².",
+      "suggest.ide.cap": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â²ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â»Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¼Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡ JetBrains IDE: ÃƒÂÃ‚Â·ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã‹â€ Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ heap, Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Â°ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´Ãƒâ€˜Ã†â€™ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â²ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â·Ãƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°.",
+      "suggest.wifi.weak": "ÃƒÂÃ‚Â¡ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°ÃƒÂÃ‚Â±ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹ WiÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬ËœFi Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¸ÃƒÂÃ‚Â³ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°ÃƒÂÃ‚Â» (<60%): ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¹ÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â±ÃƒÂÃ‚Â»ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¶Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â° ÃƒÂÃ‚Â°ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ Ethernet.",
+      "suggest.wifi.weakRssi": "ÃƒÂÃ‚Â¡ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°ÃƒÂÃ‚Â±ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹ WiÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬ËœFi Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¸ÃƒÂÃ‚Â³ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°ÃƒÂÃ‚Â» (ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â·Ãƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹ RSSI): ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¹ÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â±ÃƒÂÃ‚Â»ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¶Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â° ÃƒÂÃ‚Â°ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ Ethernet.",
+      "suggest.power.plan": "ÃƒÂÃ…Â¸ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ ÃƒÂÃ‚Â¶ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â ÃƒÂÃ‚Â½ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â½ÃƒÂÃ‚Â° ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¾ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¹ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´Ãƒâ€˜Ã†â€™ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â²ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œ: ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂºÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â½ÃƒÂÃ‚Â° ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¾ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°/Best Performance ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â´ Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â°Ãƒâ€˜Ã‚Â Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸.",
+      "suggest.vscode.extensions": "VS Code: ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂºÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â½ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â±ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â·Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â»Ãƒâ€˜Ã…Â½Ãƒâ€˜Ã¢â‚¬Â¡Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ build/output ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â·Ãƒâ€˜Ã¢â‚¬â€œ Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¶ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â° ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‹â€ Ãƒâ€˜Ã†â€™ÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™.",
+      "suggest.jetbrains.tune": "JetBrains IDE: ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂºÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â½ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â±ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°ÃƒÂÃ‚Â³Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸, ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â»Ãƒâ€˜Ã…Â½Ãƒâ€˜Ã¢â‚¬Â¡Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ buildÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Ëœoutput ÃƒÂÃ‚Â· Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â½ÃƒÂÃ‚Â´ÃƒÂÃ‚ÂµÃƒÂÃ‚ÂºÃƒâ€˜Ã‚ÂÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬â€ Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â° ÃƒÂÃ‚Â·ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã‹â€ Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ heap ÃƒÂÃ‚Â·ÃƒÂÃ‚Â° ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â±ÃƒÂÃ‚Â¸.",
+      "suggest.vs.parallel": "Visual Studio: Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂºÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â° ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¶Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â½ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â±ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬ÂÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â»Ãƒâ€˜Ã‚Â Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â´Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â³ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¶ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â.",
+      "suggest.xcode.derived": "Xcode: ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ DerivedData, ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾ÃƒÂÃ‚Â»ÃƒÂÃ‚Â¸ Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â½ÃƒÂÃ‚Â´ÃƒÂÃ‚ÂµÃƒÂÃ‚ÂºÃƒâ€˜Ã‚ÂÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã‚Â ÃƒÂÃ‚Â°ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½Ãƒâ€˜Ã…Â½Ãƒâ€˜Ã…Â½Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã‚Â.",
+      "suggest.android.accel": "Android Studio: Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂºÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â½ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¼Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â° Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â° Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚ÂºÃƒÂÃ‚ÂµÃƒâ€˜Ã‹â€  Gradle ÃƒÂÃ‚Â½ÃƒÂÃ‚Â° Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â´ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾ÃƒÂÃ‚Â¼Ãƒâ€˜Ã†â€™ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™.",
+      "suggest.node.lts": "Node.js: ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã…Â½ LTS Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â° Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¶ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â½ÃƒÂÃ‚Â° SSD.",
+      "suggest.ts.incremental": "TypeScript: Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂºÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â½ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â°ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¸ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬ÂÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â² ÃƒÂÃ‚Â´ÃƒÂÃ‚Â»Ãƒâ€˜Ã‚Â ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂµÃƒÂÃ‚Â»ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Â¦ ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Â¦ ÃƒÂÃ‚Â±ÃƒÂÃ‚Â°ÃƒÂÃ‚Â·.",
+      "suggest.python.venv": "Python: ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Â°ÃƒÂÃ‚Â° ÃƒÂÃ‚Â´ÃƒÂÃ‚Â»Ãƒâ€˜Ã‚Â Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â·ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â»Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬â€ Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â½Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¹.",
+      "suggest.java.lts": "Java: ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â°ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹ LTS JDK Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â° Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂºÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚ÂºÃƒÂÃ‚ÂµÃƒâ€˜Ã‹â€ Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Âº (Gradle/Maven).",
+      "suggest.docker.windows": "Docker Desktop (Windows): ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ WSL2 backend Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°Ãƒâ€˜Ã‹â€ Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â»Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¼Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ CPU/RAM.",
+      "suggest.docker.mac": "Docker Desktop (macOS): ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°Ãƒâ€˜Ã‹â€ Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â»Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¼Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ CPU/RAM Ãƒâ€˜Ã¢â‚¬â€œ Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¿ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ Ãƒâ€˜Ã¢â‚¬Å¾ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹ÃƒÂÃ‚Â»Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â² (VirtioFS Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Â°ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹).",
+      "checklist.osDrivers": "ÃƒÂÃ…Â¾ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ…Â¾ÃƒÂÃ‚Â¡ Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸ (GPU, Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¿Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â‚¬Å¡, WiÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬ËœFi/LAN) ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Â¦ Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Â¦ ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¹.",
+      "checklist.powerPlan": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ ÃƒÂÃ‚Â¶ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¾ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°/Best Performance ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â´ Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â°Ãƒâ€˜Ã‚Â Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Âº.",
+      "checklist.startupApps": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂºÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Âº Ãƒâ€˜Ã¢â‚¬â€œ Ãƒâ€˜Ã¢â‚¬Å¾ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œ Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â»Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¶ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¸, Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â½ÃƒÂÃ‚Âµ ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â‚¬ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã‚ÂÃƒâ€˜Ã…â€™.",
+      "checklist.diskSpace": "ÃƒÂÃ‚Â¢Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ Ãƒâ€˜Ã¢â‚¬Â°ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â½ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Âµ 20% ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â³ÃƒÂÃ‚Â¾ ÃƒÂÃ‚Â¼Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã‚Â; ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Âº Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂµÃƒÂÃ‚Â»ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬â€œ Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â°Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œ Ãƒâ€˜Ã¢â‚¬Å¾ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹ÃƒÂÃ‚Â»ÃƒÂÃ‚Â¸.",
+      "checklist.ssd": "ÃƒÂÃ¢â‚¬â„¢Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â´ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â³Ãƒâ€˜Ã†â€™ SSD ÃƒÂÃ‚Â´ÃƒÂÃ‚Â»Ãƒâ€˜Ã‚Â ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬ÂÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â²; Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â°ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¶ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Â¦ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Âº ÃƒÂÃ‚Â½ÃƒÂÃ‚Â° ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Â¦ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã‹â€ ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Â¦ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂºÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â¦.",
+      "checklist.visualEffects": "ÃƒÂÃ¢â‚¬â€ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã‹â€ Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â·Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â°ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â‚¬Å¾ÃƒÂÃ‚ÂµÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸/ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¼ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Â Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬â€ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â»Ãƒâ€˜Ã‚Â Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â´Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â³ÃƒÂÃ‚Â¾ UI.",
+      "checklist.antivirus": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â»Ãƒâ€˜Ã…Â½Ãƒâ€˜Ã¢â‚¬Â¡Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬ÂÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â² (node_modules, build, dist) ÃƒÂÃ‚Â· ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â³ÃƒÂÃ‚Â¾ Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂºÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â.",
+      "checklist.wifi": "ÃƒÂÃ¢â‚¬â„¢ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ Ethernet ÃƒÂÃ‚Â°ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¾ Ãƒâ€˜Ã‚ÂÃƒÂÃ‚Â¸ÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹ 5GHz WiÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬ËœFi; ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»Ãƒâ€˜Ã…Â½ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™ Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â° Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¶Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾.",
+      "checklist.dns": "ÃƒÂÃ‚ÂÃƒÂÃ‚Â°ÃƒÂÃ‚Â»ÃƒÂÃ‚Â°Ãƒâ€˜Ã‹â€ Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ Ãƒâ€˜Ã‹â€ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â´ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹ DNS Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â¿ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â·Ãƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂºÃƒâ€˜Ã†â€™ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â»Ãƒâ€˜Ã‚Â ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¶ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã…â€™.",
+      "checklist.browser": "ÃƒÂÃ…Â¾ÃƒÂÃ‚Â±ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂµÃƒÂÃ‚Â¶Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â»Ãƒâ€˜Ã…â€™ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂºÃƒÂÃ‚Â»ÃƒÂÃ‚Â°ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ÃƒÂÃ‚Âº Ãƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¶ÃƒÂÃ‚ÂºÃƒâ€˜Ã¢â‚¬â€œ ÃƒÂÃ‚Â´ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â´ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â´ Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â°Ãƒâ€˜Ã‚Â ÃƒÂÃ‚Â·ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾ÃƒÂÃ‚Âº.",
+      "checklist.hwAccel": "ÃƒÂÃ‚Â£ÃƒÂÃ‚Â²Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂºÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™ ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¿ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â½ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒÂÃ‚ÂºÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½ÃƒÂÃ‚Â½Ãƒâ€˜Ã‚Â, ÃƒÂÃ‚Â´ÃƒÂÃ‚Âµ Ãƒâ€˜Ã¢â‚¬Â ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â´Ãƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¸ÃƒÂÃ‚Â¼Ãƒâ€˜Ã†â€™Ãƒâ€˜Ã¢â‚¬ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã…â€™Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã‚Â (ÃƒÂÃ‚Â±Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â°Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â·ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬/IDE).",
+      "checklist.cliTools": "ÃƒÂÃ…Â¾ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»Ãƒâ€˜Ã…Â½ÃƒÂÃ‚Â¹Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ CLI-Ãƒâ€˜Ã¢â‚¬â€œÃƒÂÃ‚Â½Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡Ãƒâ€˜Ã¢â€šÂ¬Ãƒâ€˜Ã†â€™ÃƒÂÃ‚Â¼ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ (Node.js, npm, Git, Docker, Java).",
+      "checklist.reboot": "ÃƒÂÃ…Â¸ÃƒÂÃ‚ÂµÃƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚ÂµÃƒÂÃ‚Â·ÃƒÂÃ‚Â°ÃƒÂÃ‚Â²ÃƒÂÃ‚Â°ÃƒÂÃ‚Â½Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â°ÃƒÂÃ‚Â¶Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Âµ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â‚¬â€œÃƒâ€˜Ã‚ÂÃƒÂÃ‚Â»Ãƒâ€˜Ã‚Â ÃƒÂÃ‚Â²ÃƒÂÃ‚ÂµÃƒÂÃ‚Â»ÃƒÂÃ‚Â¸ÃƒÂÃ‚ÂºÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Â¦ ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â½ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â²ÃƒÂÃ‚Â»ÃƒÂÃ‚ÂµÃƒÂÃ‚Â½Ãƒâ€˜Ã…â€™, Ãƒâ€˜Ã¢â‚¬Â°ÃƒÂÃ‚Â¾ÃƒÂÃ‚Â± ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Â¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã‚ÂÃƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸Ãƒâ€˜Ã¢â‚¬Å¡ÃƒÂÃ‚Â¸ ÃƒÂÃ‚Â¿Ãƒâ€˜Ã¢â€šÂ¬ÃƒÂÃ‚Â¾Ãƒâ€˜Ã¢â‚¬Â ÃƒÂÃ‚ÂµÃƒâ€˜Ã‚ÂÃƒÂÃ‚Â¸."
+    }
+  }
+  }
+  },
+  hi: {
+    dir: "ltr",
+    strings: {
+      "app.title": "Developer Diagnostics Kit",
+      "app.badge": "Windows + macOS",
+      "platform.windows": "Windows",
+      "platform.macos": "macOS",
+      "language.title": "Ã Â¤Â­Ã Â¤Â¾Ã Â¤Â·Ã Â¤Â¾ Ã Â¤Å¡Ã Â¥ÂÃ Â¤Â¨Ã Â¥â€¡Ã Â¤â€š",
+      "language.subtitle": "Ã Â¤Â¹Ã Â¤Â® Ã Â¤â€ Ã Â¤ÂªÃ Â¤â€¢Ã Â¥â€¡ Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¥â€¡Ã Â¤Â¤Ã Â¥ÂÃ Â¤Â° Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤â€ Ã Â¤Â§Ã Â¤Â¾Ã Â¤Â° Ã Â¤ÂªÃ Â¤Â° Ã Â¤Â¸Ã Â¥ÂÃ Â¤ÂµÃ Â¤Â¤Ã Â¤Æ’ Ã Â¤ÂªÃ Â¤Â¹Ã Â¤Å¡Ã Â¤Â¾Ã Â¤Â¨ Ã Â¤Â¸Ã Â¤â€¢Ã Â¤Â¤Ã Â¥â€¡ Ã Â¤Â¹Ã Â¥Ë†Ã Â¤â€šÃ Â¥Â¤",
+      "language.auto": "Ã Â¤Â­Ã Â¤Â¾Ã Â¤Â·Ã Â¤Â¾ Ã Â¤Â¸Ã Â¥ÂÃ Â¤ÂµÃ Â¤Â¤Ã Â¤Æ’ Ã Â¤ÂªÃ Â¤Â¹Ã Â¤Å¡Ã Â¤Â¾Ã Â¤Â¨Ã Â¥â€¡Ã Â¤â€š",
+      "language.manual": "Ã Â¤Â¯Ã Â¤Â¾ Ã Â¤Â®Ã Â¥Ë†Ã Â¤Â¨Ã Â¥ÂÃ Â¤Â¯Ã Â¥ÂÃ Â¤â€¦Ã Â¤Â² Ã Â¤Â°Ã Â¥â€šÃ Â¤Âª Ã Â¤Â¸Ã Â¥â€¡ Ã Â¤Å¡Ã Â¥ÂÃ Â¤Â¨Ã Â¥â€¡Ã Â¤â€š",
+      "language.continue": "Ã Â¤Å“Ã Â¤Â¾Ã Â¤Â°Ã Â¥â‚¬ Ã Â¤Â°Ã Â¤â€“Ã Â¥â€¡Ã Â¤â€š",
+      "language.status.idle": "Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¤Â¤Ã Â¥â‚¬Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â¾Ã Â¥Â¤",
+      "language.status.detecting": "Ã Â¤Â­Ã Â¤Â¾Ã Â¤Â·Ã Â¤Â¾ Ã Â¤ÂªÃ Â¤Â¹Ã Â¤Å¡Ã Â¤Â¾Ã Â¤Â¨Ã Â¥â‚¬ Ã Â¤Å“Ã Â¤Â¾ Ã Â¤Â°Ã Â¤Â¹Ã Â¥â‚¬ Ã Â¤Â¹Ã Â¥Ë†...",
+      "language.status.detected": "Ã Â¤ÂªÃ Â¤Â¹Ã Â¤Å¡Ã Â¤Â¾Ã Â¤Â¨Ã Â¥â‚¬ Ã Â¤â€”Ã Â¤Ë†: {language}.",
+      "language.status.failed": "Ã Â¤Â­Ã Â¤Â¾Ã Â¤Â·Ã Â¤Â¾ Ã Â¤Â¨Ã Â¤Â¹Ã Â¥â‚¬Ã Â¤â€š Ã Â¤ÂªÃ Â¤Â¹Ã Â¤Å¡Ã Â¤Â¾Ã Â¤Â¨Ã Â¥â‚¬ Ã Â¤Å“Ã Â¤Â¾ Ã Â¤Â¸Ã Â¤â€¢Ã Â¥â‚¬Ã Â¥Â¤",
+      "language.label.enGB": "Ã Â¤â€¦Ã Â¤â€šÃ Â¤â€”Ã Â¥ÂÃ Â¤Â°Ã Â¥â€¡Ã Â¤Å“Ã Â¤Â¼Ã Â¥â‚¬ (UK)",
+      "language.label.nl": "Ã Â¤Â¡Ã Â¤Å¡",
+      "language.label.hi": "Ã Â¤Â¹Ã Â¤Â¿Ã Â¤Â¨Ã Â¥ÂÃ Â¤Â¦Ã Â¥â‚¬",
+      "language.label.ar": "Ã˜Â§Ã™â€žÃ˜Â¹Ã˜Â±Ã˜Â¨Ã™Å Ã˜Â©",
+      "language.label.pl": "Ã Â¤ÂªÃ Â¥â€¹Ã Â¤Â²Ã Â¤Â¿Ã Â¤Â¶",
+      "language.label.uk": "Ã Â¤Â¯Ã Â¥â€šÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â°Ã Â¥â€¡Ã Â¤Â¨Ã Â¥â‚¬",
+      "language.label.fr": "Ã Â¤Â«Ã Â¤Â¼Ã Â¥ÂÃ Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¤Å¡",
+      "language.label.pt": "Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¥ÂÃ Â¤Â¤Ã Â¤â€”Ã Â¤Â¾Ã Â¤Â²Ã Â¥â‚¬",
+      "language.label.es": "Ã Â¤Â¸Ã Â¥ÂÃ Â¤ÂªÃ Â¥â€¡Ã Â¤Â¨Ã Â¤Â¿Ã Â¤Â¶",
+      "language.label.it": "Ã Â¤â€¡Ã Â¤Â¤Ã Â¤Â¾Ã Â¤Â²Ã Â¤ÂµÃ Â¥â‚¬",
+      "language.label.id": "Ã Â¤â€¡Ã Â¤â€šÃ Â¤Â¡Ã Â¥â€¹Ã Â¤Â¨Ã Â¥â€¡Ã Â¤Â¶Ã Â¤Â¿Ã Â¤Â¯Ã Â¤Â¨",
+      "setup.title": "Ã Â¤Â¸Ã Â¥â€¡Ã Â¤Å¸Ã Â¤â€¦Ã Â¤Âª",
+      "setup.note": "Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¥â€¹Ã Â¤Å“Ã Â¥â€¡Ã Â¤â€¢Ã Â¥ÂÃ Â¤Å¸ Ã Â¤â€¢Ã Â¥â‚¬ dev dependencies Ã Â¤â€¡Ã Â¤â€šÃ Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¥â€°Ã Â¤Â² Ã Â¤â€¢Ã Â¤Â°Ã Â¤Â¤Ã Â¤Â¾ Ã Â¤Â¹Ã Â¥Ë† Ã Â¤â€Ã Â¤Â° dev Ã Â¤ÂÃ Â¤Âª Ã Â¤Â¶Ã Â¥ÂÃ Â¤Â°Ã Â¥â€š Ã Â¤â€¢Ã Â¤Â°Ã Â¤Â¤Ã Â¤Â¾ Ã Â¤Â¹Ã Â¥Ë†Ã Â¥Â¤ Ã Â¤Â¯Ã Â¤Â¹ Ã Â¤â€¢Ã Â¥â€¡Ã Â¤ÂµÃ Â¤Â² Ã Â¤Â¸Ã Â¥â€¹Ã Â¤Â°Ã Â¥ÂÃ Â¤Â¸ Ã Â¤Â¸Ã Â¥â€¡ Ã Â¤Å¡Ã Â¤Â²Ã Â¤Â¾Ã Â¤Â¨Ã Â¥â€¡ Ã Â¤ÂªÃ Â¤Â° Ã Â¤Å“Ã Â¤Â¼Ã Â¤Â°Ã Â¥â€šÃ Â¤Â°Ã Â¥â‚¬ Ã Â¤Â¹Ã Â¥Ë†Ã Â¥Â¤",
+      "setup.list.install": "Ã Â¤Å¡Ã Â¤Â²Ã Â¤Â¾Ã Â¤ÂÃ Â¤â€”Ã Â¤Â¾: npm install",
+      "setup.list.start": "Ã Â¤Å¡Ã Â¤Â²Ã Â¤Â¾Ã Â¤ÂÃ Â¤â€”Ã Â¤Â¾: npm start",
+      "setup.install": "Ã Â¤Â¨Ã Â¤Â¿Ã Â¤Â°Ã Â¥ÂÃ Â¤Â­Ã Â¤Â°Ã Â¤Â¤Ã Â¤Â¾Ã Â¤ÂÃ Â¤â€š Ã Â¤â€¡Ã Â¤â€šÃ Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¥â€°Ã Â¤Â² Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š",
+      "setup.start": "Ã Â¤ÂÃ Â¤Âª Ã Â¤Â¶Ã Â¥ÂÃ Â¤Â°Ã Â¥â€š Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š",
+      "setup.status.waiting": "Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¤Â¤Ã Â¥â‚¬Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â¾Ã Â¥Â¤",
+      "setup.status.installing": "Ã Â¤â€¡Ã Â¤â€šÃ Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¥â€°Ã Â¤Â² Ã Â¤Â¹Ã Â¥â€¹ Ã Â¤Â°Ã Â¤Â¹Ã Â¤Â¾ Ã Â¤Â¹Ã Â¥Ë†...",
+      "setup.status.starting": "Ã Â¤Â¶Ã Â¥ÂÃ Â¤Â°Ã Â¥â€š Ã Â¤Â¹Ã Â¥â€¹ Ã Â¤Â°Ã Â¤Â¹Ã Â¤Â¾ Ã Â¤Â¹Ã Â¥Ë†...",
+      "setup.status.done": "Ã Â¤Â¹Ã Â¥â€¹ Ã Â¤â€”Ã Â¤Â¯Ã Â¤Â¾Ã Â¥Â¤",
+      "mode.title": "Ã Â¤Å¸Ã Â¥â€¡Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸ Ã Â¤Â®Ã Â¥â€¹Ã Â¤Â¡",
+      "mode.brief": "Ã Â¤Â¸Ã Â¤â€šÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â¿Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â¤",
+      "mode.extensive": "Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â¸Ã Â¥ÂÃ Â¤Â¤Ã Â¥Æ’Ã Â¤Â¤",
+      "extras.title": "Ã Â¤â€¦Ã Â¤Â¤Ã Â¤Â¿Ã Â¤Â°Ã Â¤Â¿Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¤",
+      "extras.software": "Ã Â¤Â¸Ã Â¥â€°Ã Â¤Â«Ã Â¤Â¼Ã Â¥ÂÃ Â¤Å¸Ã Â¤ÂµÃ Â¥â€¡Ã Â¤Â¯Ã Â¤Â°/IDE",
+      "extras.dependencies": "Ã Â¤Å¸Ã Â¥â€šÃ Â¤Â²Ã Â¥ÂÃ Â¤Â¸ Ã Â¤â€Ã Â¤Â° Ã Â¤Â­Ã Â¤Â¾Ã Â¤Â·Ã Â¤Â¾Ã Â¤ÂÃ Â¤Â",
+      "extras.optimization": "Ã Â¤â€˜Ã Â¤ÂªÃ Â¥ÂÃ Â¤Å¸Ã Â¤Â¿Ã Â¤Â®Ã Â¤Â¾Ã Â¤â€¡Ã Â¤Å“Ã Â¥â€¡Ã Â¤Â¶Ã Â¤Â¨ Ã Â¤Å¡Ã Â¥â€¡Ã Â¤â€¢ Ã Â¤Â¶Ã Â¤Â¾Ã Â¤Â®Ã Â¤Â¿Ã Â¤Â² Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š",
+      "actions.run": "Ã Â¤Â¡Ã Â¤Â¾Ã Â¤Â¯Ã Â¤â€”Ã Â¥ÂÃ Â¤Â¨Ã Â¥â€¹Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¿Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¸ Ã Â¤Å¡Ã Â¤Â²Ã Â¤Â¾Ã Â¤ÂÃ Â¤Â",
+      "status.ready": "Ã Â¤Â¤Ã Â¥Ë†Ã Â¤Â¯Ã Â¤Â¾Ã Â¤Â°Ã Â¥Â¤",
+      "status.running": "{mode} Ã Â¤Â¡Ã Â¤Â¾Ã Â¤Â¯Ã Â¤â€”Ã Â¥ÂÃ Â¤Â¨Ã Â¥â€¹Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¿Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¸ Ã Â¤Å¡Ã Â¤Â² Ã Â¤Â°Ã Â¤Â¹Ã Â¥â€¡ Ã Â¤Â¹Ã Â¥Ë†Ã Â¤â€š...",
+      "status.complete": "{mode} Ã Â¤Â¡Ã Â¤Â¾Ã Â¤Â¯Ã Â¤â€”Ã Â¥ÂÃ Â¤Â¨Ã Â¥â€¹Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¿Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¸ Ã Â¤ÂªÃ Â¥â€šÃ Â¤Â°Ã Â¥ÂÃ Â¤Â£ Ã Â¤Â¹Ã Â¥ÂÃ Â¤ÂÃ Â¥Â¤",
+      "status.failed": "Ã Â¤Â¡Ã Â¤Â¾Ã Â¤Â¯Ã Â¤â€”Ã Â¥ÂÃ Â¤Â¨Ã Â¥â€¹Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¿Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¸ Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â«Ã Â¤Â²Ã Â¥Â¤",
+      "status.wrapping": "Ã Â¤Â¸Ã Â¤Â®Ã Â¤Â¾Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â¤ Ã Â¤â€¢Ã Â¤Â¿Ã Â¤Â¯Ã Â¤Â¾ Ã Â¤Å“Ã Â¤Â¾ Ã Â¤Â°Ã Â¤Â¹Ã Â¤Â¾ Ã Â¤Â¹Ã Â¥Ë†...",
+      "status.exporting": "{format} Ã Â¤Â¸Ã Â¤Â¹Ã Â¥â€¡Ã Â¤Å“Ã Â¤Â¾ Ã Â¤Å“Ã Â¤Â¾ Ã Â¤Â°Ã Â¤Â¹Ã Â¤Â¾ Ã Â¤Â¹Ã Â¥Ë†...",
+      "status.export.complete": "Ã Â¤ÂÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â¸Ã Â¤ÂªÃ Â¥â€¹Ã Â¤Â°Ã Â¥ÂÃ Â¤Å¸ Ã Â¤ÂªÃ Â¥â€šÃ Â¤Â°Ã Â¤Â¾ Ã Â¤Â¹Ã Â¥ÂÃ Â¤â€ Ã Â¥Â¤",
+      "status.export.canceled": "Ã Â¤ÂÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â¸Ã Â¤ÂªÃ Â¥â€¹Ã Â¤Â°Ã Â¥ÂÃ Â¤Å¸ Ã Â¤Â°Ã Â¤Â¦Ã Â¥ÂÃ Â¤Â¦ Ã Â¤Â¹Ã Â¥ÂÃ Â¤â€ Ã Â¥Â¤",
+      "status.export.failed": "Ã Â¤ÂÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â¸Ã Â¤ÂªÃ Â¥â€¹Ã Â¤Â°Ã Â¥ÂÃ Â¤Å¸ Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â«Ã Â¤Â²Ã Â¥Â¤",
+      "progress.title": "Ã Â¤Â¡Ã Â¤Â¾Ã Â¤Â¯Ã Â¤â€”Ã Â¥ÂÃ Â¤Â¨Ã Â¥â€¹Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¿Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¸ Ã Â¤Å¡Ã Â¤Â² Ã Â¤Â°Ã Â¤Â¹Ã Â¥â€¡ Ã Â¤Â¹Ã Â¥Ë†Ã Â¤â€š...",
+      "progress.preparing": "Ã Â¤Å¡Ã Â¥â€¡Ã Â¤â€¢ Ã Â¤Â¤Ã Â¥Ë†Ã Â¤Â¯Ã Â¤Â¾Ã Â¤Â° Ã Â¤â€¢Ã Â¤Â¿Ã Â¤Â Ã Â¤Å“Ã Â¤Â¾ Ã Â¤Â°Ã Â¤Â¹Ã Â¥â€¡ Ã Â¤Â¹Ã Â¥Ë†Ã Â¤â€šÃ Â¥Â¤",
+      "progress.running": "{mode} Ã Â¤Å¡Ã Â¥â€¡Ã Â¤â€¢ Ã Â¤Å¡Ã Â¤Â² Ã Â¤Â°Ã Â¤Â¹Ã Â¥â€¡ Ã Â¤Â¹Ã Â¥Ë†Ã Â¤â€š...",
+      "results.button": "Ã Â¤ÂªÃ Â¤Â°Ã Â¤Â¿Ã Â¤Â£Ã Â¤Â¾Ã Â¤Â®",
+      "results.title": "Ã Â¤ÂªÃ Â¤Â°Ã Â¤Â¿Ã Â¤Â£Ã Â¤Â¾Ã Â¤Â®",
+      "results.placeholder": "Ã Â¤ÂªÃ Â¤Â°Ã Â¤Â¿Ã Â¤Â£Ã Â¤Â¾Ã Â¤Â® Ã Â¤Â¦Ã Â¥â€¡Ã Â¤â€“Ã Â¤Â¨Ã Â¥â€¡ Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤Â²Ã Â¤Â¿Ã Â¤Â Ã Â¤Â¡Ã Â¤Â¾Ã Â¤Â¯Ã Â¤â€”Ã Â¥ÂÃ Â¤Â¨Ã Â¥â€¹Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¿Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¸ Ã Â¤Å¡Ã Â¤Â²Ã Â¤Â¾Ã Â¤ÂÃ Â¤ÂÃ Â¥Â¤",
+      "export.title": "Ã Â¤ÂªÃ Â¤Â°Ã Â¤Â¿Ã Â¤Â£Ã Â¤Â¾Ã Â¤Â® Ã Â¤ÂÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â¸Ã Â¤ÂªÃ Â¥â€¹Ã Â¤Â°Ã Â¥ÂÃ Â¤Å¸ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š",
+      "export.button": "Ã Â¤ÂªÃ Â¤Â°Ã Â¤Â¿Ã Â¤Â£Ã Â¤Â¾Ã Â¤Â® Ã Â¤ÂÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â¸Ã Â¤ÂªÃ Â¥â€¹Ã Â¤Â°Ã Â¥ÂÃ Â¤Å¸ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š",
+      "export.previous": "Ã Â¤ÂªÃ Â¤Â¿Ã Â¤â€ºÃ Â¤Â²Ã Â¤Â¾",
+      "results.status.ready": "Ã Â¤Â¤Ã Â¥Ë†Ã Â¤Â¯Ã Â¤Â¾Ã Â¤Â°Ã Â¥Â¤",
+      "results.status.running": "Ã Â¤Å¡Ã Â¤Â² Ã Â¤Â°Ã Â¤Â¹Ã Â¤Â¾ Ã Â¤Â¹Ã Â¥Ë†...",
+      "results.status.complete": "Ã Â¤ÂªÃ Â¥â€šÃ Â¤Â°Ã Â¥ÂÃ Â¤Â£ Ã Â¤Â¹Ã Â¥ÂÃ Â¤â€ Ã Â¥Â¤",
+      "results.status.failed": "Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â«Ã Â¤Â²Ã Â¥Â¤",
+      "suggestions.title": "Ã Â¤â€˜Ã Â¤ÂªÃ Â¥ÂÃ Â¤Å¸Ã Â¤Â¿Ã Â¤Â®Ã Â¤Â¾Ã Â¤â€¡Ã Â¤Å“Ã Â¥â€¡Ã Â¤Â¶Ã Â¤Â¨ Ã Â¤Â¸Ã Â¥ÂÃ Â¤ÂÃ Â¤Â¾Ã Â¤Âµ",
+      "suggestions.placeholder": "Ã Â¤Â¸Ã Â¥ÂÃ Â¤ÂÃ Â¤Â¾Ã Â¤Âµ Ã Â¤Â¦Ã Â¥â€¡Ã Â¤â€“Ã Â¤Â¨Ã Â¥â€¡ Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤Â²Ã Â¤Â¿Ã Â¤Â Ã Â¤Â¡Ã Â¤Â¾Ã Â¤Â¯Ã Â¤â€”Ã Â¥ÂÃ Â¤Â¨Ã Â¥â€¹Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¿Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¸ Ã Â¤Å¡Ã Â¤Â²Ã Â¤Â¾Ã Â¤ÂÃ Â¤ÂÃ Â¥Â¤",
+      "actions.close": "Ã Â¤ÂÃ Â¤Âª Ã Â¤Â¬Ã Â¤â€šÃ Â¤Â¦ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š",
+      "modal.title": "Ã Â¤ÂªÃ Â¤Â°Ã Â¤Â¿Ã Â¤Â£Ã Â¤Â¾Ã Â¤Â® Ã Â¤ÂÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â¸Ã Â¤ÂªÃ Â¥â€¹Ã Â¤Â°Ã Â¥ÂÃ Â¤Å¸ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š",
+      "modal.subtitle": "Ã Â¤ÂÃ Â¤â€¢ Ã Â¤Â«Ã Â¥â€°Ã Â¤Â°Ã Â¥ÂÃ Â¤Â®Ã Â¥â€¡Ã Â¤Å¸ Ã Â¤Å¡Ã Â¥ÂÃ Â¤Â¨Ã Â¥â€¡Ã Â¤â€š:",
+      "modal.cancel": "Ã Â¤Â°Ã Â¤Â¦Ã Â¥ÂÃ Â¤Â¦ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š",
+      "results.brief.title": "Ã Â¤Â¸Ã Â¤â€šÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â¿Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â¤ Ã Â¤â€¦Ã Â¤ÂµÃ Â¤Â²Ã Â¥â€¹Ã Â¤â€¢Ã Â¤Â¨",
+      "results.extensive.title": "Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â¸Ã Â¥ÂÃ Â¤Â¤Ã Â¥Æ’Ã Â¤Â¤ Ã Â¤Â¡Ã Â¤Â¾Ã Â¤Â¯Ã Â¤â€”Ã Â¥ÂÃ Â¤Â¨Ã Â¥â€¹Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¿Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¸",
+      "section.os": "OS",
+      "section.cpu": "CPU (Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¥â€¹Ã Â¤Â¸Ã Â¥â€¡Ã Â¤Â¸Ã Â¤Â°)",
+      "section.ram": "RAM Ã Â¤Â®Ã Â¥â€°Ã Â¤Â¡Ã Â¥ÂÃ Â¤Â¯Ã Â¥â€šÃ Â¤Â²",
+      "section.gpu": "GPU (Ã Â¤ÂµÃ Â¥â‚¬Ã Â¤Â¡Ã Â¤Â¿Ã Â¤Â¯Ã Â¥â€¹ Ã Â¤â€¢Ã Â¤Â¾Ã Â¤Â°Ã Â¥ÂÃ Â¤Â¡)",
+      "section.internet": "Ã Â¤â€¡Ã Â¤â€šÃ Â¤Å¸Ã Â¤Â°Ã Â¤Â¨Ã Â¥â€¡Ã Â¤Å¸",
+      "section.network": "Ã Â¤Â¨Ã Â¥â€¡Ã Â¤Å¸Ã Â¤ÂµÃ Â¤Â°Ã Â¥ÂÃ Â¤â€¢",
+      "section.system": "Ã Â¤Â¸Ã Â¤Â¿Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â® Ã Â¤Â¸Ã Â¥â€¡Ã Â¤Å¸Ã Â¤Â¿Ã Â¤â€šÃ Â¤â€”Ã Â¥ÂÃ Â¤Â¸",
+      "section.process": "Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¥â€¹Ã Â¤Â¸Ã Â¥â€¡Ã Â¤Â¸",
+      "section.app": "Ã Â¤ÂÃ Â¤Âª",
+      "section.work": "Ã Â¤â€¢Ã Â¤Â¾Ã Â¤Â® Ã Â¤â€¢Ã Â¥â‚¬ Ã Â¤Â¤Ã Â¥Ë†Ã Â¤Â¯Ã Â¤Â¾Ã Â¤Â°Ã Â¥â‚¬",
+      "section.cli": "CLI Ã Â¤Å¸Ã Â¥â€šÃ Â¤Â²Ã Â¥ÂÃ Â¤Â¸",
+      "section.software": "Ã Â¤â€¡Ã Â¤â€šÃ Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¥â€°Ã Â¤Â² Ã Â¤â€¢Ã Â¤Â¿Ã Â¤Â Ã Â¤â€”Ã Â¤Â Ã Â¤Â¸Ã Â¥â€°Ã Â¤Â«Ã Â¤Â¼Ã Â¥ÂÃ Â¤Å¸Ã Â¤ÂµÃ Â¥â€¡Ã Â¤Â¯Ã Â¤Â°/IDE",
+      "section.dependencies": "Ã Â¤Å¸Ã Â¥â€šÃ Â¤Â²Ã Â¥ÂÃ Â¤Â¸ Ã Â¤â€Ã Â¤Â° Ã Â¤Â­Ã Â¤Â¾Ã Â¤Â·Ã Â¤Â¾Ã Â¤ÂÃ Â¤Â",
+      "section.suggestions": "Ã Â¤Â¸Ã Â¥ÂÃ Â¤ÂÃ Â¤Â¾Ã Â¤Âµ",
+      "label.version": "Ã Â¤ÂµÃ Â¤Â°Ã Â¥ÂÃ Â¤Å“Ã Â¤Â¼Ã Â¤Â¨",
+      "label.release": "Ã Â¤Â°Ã Â¤Â¿Ã Â¤Â²Ã Â¥â‚¬Ã Â¤Å“Ã Â¤Â¼",
+      "label.arch": "Ã Â¤â€ Ã Â¤Â°Ã Â¥ÂÃ Â¤â€¢",
+      "label.hostname": "Ã Â¤Â¹Ã Â¥â€¹Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¨Ã Â¥â€¡Ã Â¤Â®",
+      "label.ip": "ip",
+      "label.updateStatus": "Ã Â¤â€¦Ã Â¤ÂªÃ Â¤Â¡Ã Â¥â€¡Ã Â¤Å¸ Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¥â€¡Ã Â¤Å¸Ã Â¤Â¸",
+      "label.vendor": "Ã Â¤ÂµÃ Â¥â€¡Ã Â¤â€šÃ Â¤Â¡Ã Â¤Â°",
+      "label.model": "Ã Â¤Â®Ã Â¥â€°Ã Â¤Â¡Ã Â¤Â²",
+      "label.cores": "Ã Â¤â€¢Ã Â¥â€¹Ã Â¤Â°",
+      "label.installed": "Ã Â¤â€¡Ã Â¤â€šÃ Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¥â€°Ã Â¤Â²",
+      "label.totalSpeed": "Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â² Ã Â¤â€”Ã Â¤Â¤Ã Â¤Â¿",
+      "label.voltage": "Ã Â¤ÂµÃ Â¥â€¹Ã Â¤Â²Ã Â¥ÂÃ Â¤Å¸Ã Â¥â€¡Ã Â¤Å“",
+      "label.loadAvg": "Ã Â¤â€Ã Â¤Â¸Ã Â¤Â¤ Ã Â¤Â²Ã Â¥â€¹Ã Â¤Â¡",
+      "label.total": "Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â²",
+      "label.used": "Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â¯Ã Â¥â€¹Ã Â¤â€”",
+      "label.free": "Ã Â¤Â®Ã Â¥ÂÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â¤",
+      "label.intellijCap": "IntelliJ Ã Â¤Â¸Ã Â¥â‚¬Ã Â¤Â®Ã Â¤Â¾",
+      "label.altIdeCaps": "Ã Â¤ÂµÃ Â¥Ë†Ã Â¤â€¢Ã Â¤Â²Ã Â¥ÂÃ Â¤ÂªÃ Â¤Â¿Ã Â¤â€¢ IDE Ã Â¤Â¸Ã Â¥â‚¬Ã Â¤Â®Ã Â¤Â¾Ã Â¤ÂÃ Â¤Â",
+      "label.driver": "Ã Â¤Â¡Ã Â¥ÂÃ Â¤Â°Ã Â¤Â¾Ã Â¤â€¡Ã Â¤ÂµÃ Â¤Â°",
+      "label.speed": "Ã Â¤â€”Ã Â¤Â¤Ã Â¤Â¿",
+      "label.test": "Ã Â¤Å¸Ã Â¥â€¡Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸",
+      "label.download": "Ã Â¤Â¡Ã Â¤Â¾Ã Â¤â€°Ã Â¤Â¨Ã Â¤Â²Ã Â¥â€¹Ã Â¤Â¡",
+      "label.upload": "Ã Â¤â€¦Ã Â¤ÂªÃ Â¤Â²Ã Â¥â€¹Ã Â¤Â¡",
+      "label.ping": "Ã Â¤ÂªÃ Â¤Â¿Ã Â¤â€šÃ Â¤â€”",
+      "label.status": "Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¥â€¡Ã Â¤Å¸Ã Â¤Â¸",
+      "label.gateway": "Ã Â¤â€”Ã Â¥â€¡Ã Â¤Å¸Ã Â¤ÂµÃ Â¥â€¡",
+      "label.routerFirmware": "Ã Â¤Â°Ã Â¤Â¾Ã Â¤â€°Ã Â¤Å¸Ã Â¤Â° Ã Â¤Â«Ã Â¤Â°Ã Â¥ÂÃ Â¤Â®Ã Â¤ÂµÃ Â¥â€¡Ã Â¤Â¯Ã Â¤Â°",
+      "label.wifi": "wifi",
+      "label.signal": "Ã Â¤Â¸Ã Â¤Â¿Ã Â¤â€”Ã Â¥ÂÃ Â¤Â¨Ã Â¤Â²",
+      "label.lan": "lan",
+      "label.power": "Ã Â¤ÂªÃ Â¤Â¾Ã Â¤ÂµÃ Â¤Â°",
+      "label.name": "Ã Â¤Â¨Ã Â¤Â¾Ã Â¤Â®",
+      "label.electron": "electron",
+      "label.node": "node",
+      "label.chrome": "chrome",
+      "label.javaHome": "java home",
+      "label.platform": "Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â²Ã Â¥â€¡Ã Â¤Å¸Ã Â¤Â«Ã Â¤Â¼Ã Â¥â€°Ã Â¤Â°Ã Â¥ÂÃ Â¤Â®",
+      "label.missingEssentials": "Ã Â¤Å“Ã Â¤Â°Ã Â¥â€šÃ Â¤Â°Ã Â¥â‚¬ Ã Â¤Å¡Ã Â¥â‚¬Ã Â¤Å“Ã Â¤Â¼Ã Â¥â€¡Ã Â¤â€š Ã Â¤Â¨Ã Â¤Â¹Ã Â¥â‚¬Ã Â¤â€š Ã Â¤Â®Ã Â¤Â¿Ã Â¤Â²Ã Â¥â‚¬Ã Â¤â€š",
+      "brief.os": "OS",
+      "brief.arch": "arch",
+      "brief.cpu": "CPU",
+      "brief.ram": "RAM",
+      "brief.gpu": "GPU",
+      "brief.internet": "Internet",
+      "brief.cli": "CLI Ã Â¤Å¸Ã Â¥â€šÃ Â¤Â²Ã Â¥ÂÃ Â¤Â¸",
+      "brief.software": "Ã Â¤Â¸Ã Â¥â€°Ã Â¤Â«Ã Â¤Â¼Ã Â¥ÂÃ Â¤Å¸Ã Â¤ÂµÃ Â¥â€¡Ã Â¤Â¯Ã Â¤Â°/IDE",
+      "brief.dependencies": "Ã Â¤Å¸Ã Â¥â€šÃ Â¤Â²Ã Â¥ÂÃ Â¤Â¸ Ã Â¤â€Ã Â¤Â° Ã Â¤Â­Ã Â¤Â¾Ã Â¤Â·Ã Â¤Â¾Ã Â¤ÂÃ Â¤Â",
+      "brief.missing": "Ã Â¤Å“Ã Â¤Â°Ã Â¥â€šÃ Â¤Â°Ã Â¥â‚¬ Ã Â¤Å¡Ã Â¥â‚¬Ã Â¤Å“Ã Â¤Â¼Ã Â¥â€¡Ã Â¤â€š Ã Â¤Â¨Ã Â¤Â¹Ã Â¥â‚¬Ã Â¤â€š Ã Â¤Â®Ã Â¤Â¿Ã Â¤Â²Ã Â¥â‚¬Ã Â¤â€š",
+      "note.skipped": "Ã Â¤Â¸Ã Â¥ÂÃ Â¤â€¢Ã Â¤Â¿Ã Â¤Âª Ã Â¤â€¢Ã Â¤Â¿Ã Â¤Â¯Ã Â¤Â¾ Ã Â¤â€”Ã Â¤Â¯Ã Â¤Â¾ (Ã Â¤Â¸Ã Â¥ÂÃ Â¤ÂªÃ Â¥â‚¬Ã Â¤Â¡ Ã Â¤Å¸Ã Â¥â€¡Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸ Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤Â²Ã Â¤Â¿Ã Â¤Â Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â¸Ã Â¥ÂÃ Â¤Â¤Ã Â¥Æ’Ã Â¤Â¤ Ã Â¤Å¡Ã Â¤Â²Ã Â¤Â¾Ã Â¤ÂÃ Â¤Â)",
+      "note.optimization.disabled": "Ã Â¤â€˜Ã Â¤ÂªÃ Â¥ÂÃ Â¤Å¸Ã Â¤Â¿Ã Â¤Â®Ã Â¤Â¾Ã Â¤â€¡Ã Â¤Å“Ã Â¥â€¡Ã Â¤Â¶Ã Â¤Â¨ Ã Â¤Å¡Ã Â¥â€¡Ã Â¤â€¢ Ã Â¤Â¬Ã Â¤â€šÃ Â¤Â¦ Ã Â¤Â¹Ã Â¥Ë†Ã Â¤â€šÃ Â¥Â¤",
+      "note.noDiagnostics": "Ã Â¤â€¢Ã Â¥â€¹Ã Â¤Ë† Ã Â¤Â¡Ã Â¤Â¾Ã Â¤Â¯Ã Â¤â€”Ã Â¥ÂÃ Â¤Â¨Ã Â¥â€¹Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¿Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¸ Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â²Ã Â¤Â¬Ã Â¥ÂÃ Â¤Â§ Ã Â¤Â¨Ã Â¤Â¹Ã Â¥â‚¬Ã Â¤â€šÃ Â¥Â¤",
+      "note.noIssues": "Ã Â¤â€¢Ã Â¥â€¹Ã Â¤Ë† Ã Â¤Â¤Ã Â¤Â¾Ã Â¤Â¤Ã Â¥ÂÃ Â¤â€¢Ã Â¤Â¾Ã Â¤Â²Ã Â¤Â¿Ã Â¤â€¢ Ã Â¤Â¸Ã Â¤Â®Ã Â¤Â¸Ã Â¥ÂÃ Â¤Â¯Ã Â¤Â¾ Ã Â¤Â¨Ã Â¤Â¹Ã Â¥â‚¬Ã Â¤â€š Ã Â¤Â®Ã Â¤Â¿Ã Â¤Â²Ã Â¥â‚¬Ã Â¥Â¤ Ã Â¤Â¸Ã Â¤Â¿Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â® Ã Â¤Â Ã Â¥â‚¬Ã Â¤â€¢ Ã Â¤Â²Ã Â¤â€” Ã Â¤Â°Ã Â¤Â¹Ã Â¤Â¾ Ã Â¤Â¹Ã Â¥Ë†Ã Â¥Â¤",
+      "note.potential": "Ã Â¤Â¸Ã Â¤â€šÃ Â¤Â­Ã Â¤Â¾Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â¤ Ã Â¤Â¸Ã Â¥ÂÃ Â¤Â§Ã Â¤Â¾Ã Â¤Â° (Ã Â¤â€¦Ã Â¤Â¨Ã Â¥ÂÃ Â¤Â®Ã Â¤Â¾Ã Â¤Â¨): {min}-{max}%.",
+      "note.missing.none": "Ã Â¤â€¢Ã Â¥â€¹Ã Â¤Ë† Ã Â¤Â¨Ã Â¤Â¹Ã Â¥â‚¬Ã Â¤â€š",
+      "note.na": "n/a",
+      "suggest.checklist.brief": "Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¾Ã Â¤Â°Ã Â¥ÂÃ Â¤Å¸ Ã Â¤Å¡Ã Â¥â€¡Ã Â¤â€¢Ã Â¤Â²Ã Â¤Â¿Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸: Ã Â¤Â¸Ã Â¥ÂÃ Â¤Â¨Ã Â¤Â¿Ã Â¤Â¶Ã Â¥ÂÃ Â¤Å¡Ã Â¤Â¿Ã Â¤Â¤ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š Ã Â¤â€¢Ã Â¤Â¿ Ã Â¤â€ Ã Â¤ÂµÃ Â¤Â¶Ã Â¥ÂÃ Â¤Â¯Ã Â¤â€¢ Ã Â¤Å¸Ã Â¥â€šÃ Â¤Â²Ã Â¥ÂÃ Â¤Â¸ Ã Â¤â€¡Ã Â¤â€šÃ Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¥â€°Ã Â¤Â² Ã Â¤Â¹Ã Â¥Ë†Ã Â¤â€š Ã Â¤â€Ã Â¤Â° Ã Â¤Â¬Ã Â¤Â¿Ã Â¤Â²Ã Â¥ÂÃ Â¤Â¡Ã Â¥ÂÃ Â¤Â¸ Ã Â¤Å¡Ã Â¤Â² Ã Â¤Â°Ã Â¤Â¹Ã Â¥â€¡ Ã Â¤Â¹Ã Â¥Ë†Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.checklist.extensive": "Ã Â¤Â®Ã Â¥Ë†Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¸ Ã Â¤ÂªÃ Â¤Â°Ã Â¤Â«Ã Â¥â€°Ã Â¤Â°Ã Â¥ÂÃ Â¤Â®Ã Â¥â€¡Ã Â¤â€šÃ Â¤Â¸ Ã Â¤Å¡Ã Â¥â€¡Ã Â¤â€¢Ã Â¤Â²Ã Â¤Â¿Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸: Ã Â¤â€°Ã Â¤Â¨ Ã Â¤â€¢Ã Â¤Â¦Ã Â¤Â®Ã Â¥â€¹Ã Â¤â€š Ã Â¤ÂªÃ Â¤Â° Ã Â¤Â§Ã Â¥ÂÃ Â¤Â¯Ã Â¤Â¾Ã Â¤Â¨ Ã Â¤Â¦Ã Â¥â€¡Ã Â¤â€š Ã Â¤Å“Ã Â¥â€¹ Ã Â¤â€”Ã Â¤Â¤Ã Â¤Â¿ Ã Â¤â€Ã Â¤Â° Ã Â¤Â¦Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â¤Ã Â¤Â¾ Ã Â¤Â¬Ã Â¤Â¢Ã Â¤Â¼Ã Â¤Â¾Ã Â¤Â¤Ã Â¥â€¡ Ã Â¤Â¹Ã Â¥Ë†Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.memory.low": "Ã Â¤â€¢Ã Â¤Â® Ã Â¤Â«Ã Â¥ÂÃ Â¤Â°Ã Â¥â‚¬ Ã Â¤Â®Ã Â¥â€¡Ã Â¤Â®Ã Â¥â€¹Ã Â¤Â°Ã Â¥â‚¬: Ã Â¤â€¦Ã Â¤Â¨Ã Â¥ÂÃ Â¤ÂªÃ Â¤Â¯Ã Â¥â€¹Ã Â¤â€”Ã Â¥â‚¬ Ã Â¤ÂÃ Â¤ÂªÃ Â¥ÂÃ Â¤Â¸ Ã Â¤Â¬Ã Â¤â€šÃ Â¤Â¦ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š Ã Â¤Â¯Ã Â¤Â¾ Ã Â¤Â°Ã Â¥â‚¬Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¾Ã Â¤Â°Ã Â¥ÂÃ Â¤Å¸ Ã Â¤â€¢Ã Â¤Â°Ã Â¤â€¢Ã Â¥â€¡ RAM Ã Â¤â€“Ã Â¤Â¾Ã Â¤Â²Ã Â¥â‚¬ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.memory.veryHigh": "RAM Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â¯Ã Â¥â€¹Ã Â¤â€” >= 90%: Ã Â¤Â­Ã Â¤Â¾Ã Â¤Â°Ã Â¥â‚¬ Ã Â¤ÂÃ Â¤ÂªÃ Â¥ÂÃ Â¤Â¸ Ã Â¤Â¬Ã Â¤â€šÃ Â¤Â¦ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š, Ã Â¤Â¬Ã Â¤Â¿Ã Â¤Â²Ã Â¥ÂÃ Â¤Â¡ Ã Â¤Â°Ã Â¥â€¹Ã Â¤â€¢Ã Â¥â€¡Ã Â¤â€š, Ã Â¤Â¯Ã Â¤Â¾ RAM Ã Â¤Â¬Ã Â¤Â¢Ã Â¤Â¼Ã Â¤Â¾Ã Â¤ÂÃ Â¤ÂÃ Â¥Â¤",
+      "suggest.memory.high": "RAM Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â¯Ã Â¥â€¹Ã Â¤â€” >= 80%: Ã Â¤ÂÃ Â¤ÂªÃ Â¥ÂÃ Â¤Â¸ Ã Â¤Â¬Ã Â¤â€šÃ Â¤Â¦ Ã Â¤â€¢Ã Â¤Â°Ã Â¤Â¨Ã Â¥â€¡ Ã Â¤Â¯Ã Â¤Â¾ RAM Ã Â¤Â¬Ã Â¤Â¢Ã Â¤Â¼Ã Â¤Â¾Ã Â¤Â¨Ã Â¥â€¡ Ã Â¤ÂªÃ Â¤Â° Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Å¡Ã Â¤Â¾Ã Â¤Â° Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.memory.reserve": "Ã Â¤â€¢Ã Â¥Ë†Ã Â¤Â¶ Ã Â¤â€Ã Â¤Â° OS Ã Â¤â€¢Ã Â¤Â¾Ã Â¤Â°Ã Â¥ÂÃ Â¤Â¯Ã Â¥â€¹Ã Â¤â€š Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤Â²Ã Â¤Â¿Ã Â¤Â 20% RAM Ã Â¤â€“Ã Â¤Â¾Ã Â¤Â²Ã Â¥â‚¬ Ã Â¤Â°Ã Â¤â€“Ã Â¥â€¡Ã Â¤â€š; 10% Ã Â¤Â¨Ã Â¥ÂÃ Â¤Â¯Ã Â¥â€šÃ Â¤Â¨Ã Â¤Â¤Ã Â¤Â® Ã Â¤Â¹Ã Â¥Ë†Ã Â¥Â¤",
+      "suggest.cpu.high": "Ã Â¤â€°Ã Â¤Å¡Ã Â¥ÂÃ Â¤Å¡ CPU Ã Â¤Â²Ã Â¥â€¹Ã Â¤Â¡: Ã Â¤Å¸Ã Â¤Â¾Ã Â¤Â¸Ã Â¥ÂÃ Â¤â€¢ Ã Â¤Â®Ã Â¥Ë†Ã Â¤Â¨Ã Â¥â€¡Ã Â¤Å“Ã Â¤Â° Ã Â¤Â®Ã Â¥â€¡Ã Â¤â€š Ã Â¤Â­Ã Â¤Â¾Ã Â¤Â°Ã Â¥â‚¬ Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¥â€¹Ã Â¤Â¸Ã Â¥â€¡Ã Â¤Â¸ Ã Â¤Â¦Ã Â¥â€¡Ã Â¤â€“Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.internet.failed": "Ã Â¤â€¡Ã Â¤â€šÃ Â¤Å¸Ã Â¤Â°Ã Â¤Â¨Ã Â¥â€¡Ã Â¤Å¸ Ã Â¤Å¡Ã Â¥â€¡Ã Â¤â€¢ Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â«Ã Â¤Â²: Ã Â¤â€¢Ã Â¤Â¨Ã Â¥â€¡Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¶Ã Â¤Â¨ Ã Â¤Â¯Ã Â¤Â¾ Ã Â¤Â«Ã Â¤Â¼Ã Â¤Â¾Ã Â¤Â¯Ã Â¤Â°Ã Â¤ÂµÃ Â¥â€°Ã Â¤Â² Ã Â¤Å“Ã Â¤Â¾Ã Â¤ÂÃ Â¤Å¡Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.internet.latency": "Ã Â¤â€°Ã Â¤Å¡Ã Â¥ÂÃ Â¤Å¡ Ã Â¤â€¡Ã Â¤â€šÃ Â¤Å¸Ã Â¤Â°Ã Â¤Â¨Ã Â¥â€¡Ã Â¤Å¸ Ã Â¤Â²Ã Â¥Ë†Ã Â¤Å¸Ã Â¥â€¡Ã Â¤â€šÃ Â¤Â¸Ã Â¥â‚¬: Ã Â¤Â¨Ã Â¥â€¡Ã Â¤Å¸Ã Â¤ÂµÃ Â¤Â°Ã Â¥ÂÃ Â¤â€¢ Ã Â¤Â¬Ã Â¤Â¦Ã Â¤Â²Ã Â¥â€¡Ã Â¤â€š Ã Â¤Â¯Ã Â¤Â¾ Ã Â¤Â°Ã Â¤Â¾Ã Â¤â€°Ã Â¤Å¸Ã Â¤Â° Ã Â¤Â°Ã Â¥â‚¬Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¾Ã Â¤Â°Ã Â¥ÂÃ Â¤Å¸ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.os.updates": "macOS Ã Â¤â€¦Ã Â¤ÂªÃ Â¤Â¡Ã Â¥â€¡Ã Â¤Å¸ Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â²Ã Â¤Â¬Ã Â¥ÂÃ Â¤Â§: Ã Â¤Â¨Ã Â¤ÂµÃ Â¥â‚¬Ã Â¤Â¨Ã Â¤Â¤Ã Â¤Â® Ã Â¤â€¦Ã Â¤ÂªÃ Â¤Â¡Ã Â¥â€¡Ã Â¤Å¸ Ã Â¤â€¡Ã Â¤â€šÃ Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¥â€°Ã Â¤Â² Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.gpu.full": "GPU Ã Â¤â€Ã Â¤Â° Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¥â€¹Ã Â¤Â¸Ã Â¥â€¡Ã Â¤Â¸ Ã Â¤ÂµÃ Â¤Â¿Ã Â¤ÂµÃ Â¤Â°Ã Â¤Â£ Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤Â²Ã Â¤Â¿Ã Â¤Â Ã Â¤ÂªÃ Â¥â€šÃ Â¤Â°Ã Â¥ÂÃ Â¤Â£ Ã Â¤Â¡Ã Â¤Â¾Ã Â¤Â¯Ã Â¤â€”Ã Â¥ÂÃ Â¤Â¨Ã Â¥â€¹Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¿Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¸ Ã Â¤Å¡Ã Â¤Â²Ã Â¤Â¾Ã Â¤ÂÃ Â¤ÂÃ Â¥Â¤",
+      "suggest.ide.cap": "JetBrains IDE Ã Â¤Â¸Ã Â¥â‚¬Ã Â¤Â®Ã Â¤Â¾ Ã Â¤Â®Ã Â¤Â¿Ã Â¤Â²Ã Â¥â‚¬: Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¤Â¦Ã Â¤Â°Ã Â¥ÂÃ Â¤Â¶Ã Â¤Â¨ Ã Â¤Â§Ã Â¥â‚¬Ã Â¤Â®Ã Â¤Â¾ Ã Â¤Â¹Ã Â¥â€¹ Ã Â¤Â¤Ã Â¥â€¹ heap Ã Â¤Â¬Ã Â¤Â¢Ã Â¤Â¼Ã Â¤Â¾Ã Â¤ÂÃ Â¤ÂÃ Â¥Â¤",
+      "suggest.wifi.weak": "Ã Â¤â€¢Ã Â¤Â®Ã Â¤Å“Ã Â¤Â¼Ã Â¥â€¹Ã Â¤Â° WiÃ¢â‚¬â€˜Fi Ã Â¤Â¸Ã Â¤Â¿Ã Â¤â€”Ã Â¥ÂÃ Â¤Â¨Ã Â¤Â² (<60%): Ã Â¤Â°Ã Â¤Â¾Ã Â¤â€°Ã Â¤Å¸Ã Â¤Â° Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤ÂªÃ Â¤Â¾Ã Â¤Â¸ Ã Â¤Å“Ã Â¤Â¾Ã Â¤ÂÃ Â¤Â Ã Â¤Â¯Ã Â¤Â¾ Ethernet Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â¯Ã Â¥â€¹Ã Â¤â€” Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.wifi.weakRssi": "Ã Â¤â€¢Ã Â¤Â®Ã Â¤Å“Ã Â¤Â¼Ã Â¥â€¹Ã Â¤Â° WiÃ¢â‚¬â€˜Fi Ã Â¤Â¸Ã Â¤Â¿Ã Â¤â€”Ã Â¥ÂÃ Â¤Â¨Ã Â¤Â² (Ã Â¤â€¢Ã Â¤Â® RSSI): Ã Â¤Â°Ã Â¤Â¾Ã Â¤â€°Ã Â¤Å¸Ã Â¤Â° Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤ÂªÃ Â¤Â¾Ã Â¤Â¸ Ã Â¤Å“Ã Â¤Â¾Ã Â¤ÂÃ Â¤Â Ã Â¤Â¯Ã Â¤Â¾ Ethernet Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â¯Ã Â¥â€¹Ã Â¤â€” Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.power.plan": "Ã Â¤ÂªÃ Â¤Â¾Ã Â¤ÂµÃ Â¤Â° Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â²Ã Â¤Â¾Ã Â¤Â¨ Ã Â¤Â¹Ã Â¤Â¾Ã Â¤Ë† Ã Â¤ÂªÃ Â¤Â°Ã Â¤Â«Ã Â¥â€°Ã Â¤Â°Ã Â¥ÂÃ Â¤Â®Ã Â¥â€¡Ã Â¤â€šÃ Â¤Â¸ Ã Â¤ÂªÃ Â¤Â° Ã Â¤Â¨Ã Â¤Â¹Ã Â¥â‚¬Ã Â¤â€š Ã Â¤Â¹Ã Â¥Ë†: Ã Â¤â€¢Ã Â¥â€¹Ã Â¤Â¡Ã Â¤Â¿Ã Â¤â€šÃ Â¤â€”/Ã Â¤Â¬Ã Â¤Â¿Ã Â¤Â²Ã Â¥ÂÃ Â¤Â¡ Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤Â¸Ã Â¤Â®Ã Â¤Â¯ Ã Â¤Â¹Ã Â¤Â¾Ã Â¤Ë†/Ã Â¤Â¬Ã Â¥â€¡Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸ Ã Â¤ÂªÃ Â¤Â°Ã Â¤Â«Ã Â¥â€°Ã Â¤Â°Ã Â¥ÂÃ Â¤Â®Ã Â¥â€¡Ã Â¤â€šÃ Â¤Â¸ Ã Â¤ÂªÃ Â¤Â° Ã Â¤Å“Ã Â¤Â¾Ã Â¤ÂÃ Â¤ÂÃ Â¥Â¤",
+      "suggest.vscode.extensions": "VS Code: Ã Â¤â€¦Ã Â¤Â¨Ã Â¤Â¾Ã Â¤ÂµÃ Â¤Â¶Ã Â¥ÂÃ Â¤Â¯Ã Â¤â€¢ Ã Â¤ÂÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â¸Ã Â¤Å¸Ã Â¥â€¡Ã Â¤â€šÃ Â¤Â¶Ã Â¤Â¨ Ã Â¤Â¬Ã Â¤â€šÃ Â¤Â¦ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š Ã Â¤â€Ã Â¤Â° build/output Ã Â¤Â«Ã Â¥â€¹Ã Â¤Â²Ã Â¥ÂÃ Â¤Â¡Ã Â¤Â° Ã Â¤â€¢Ã Â¥â€¹ Ã Â¤ÂµÃ Â¥â€°Ã Â¤Å¡Ã Â¤Â¿Ã Â¤â€šÃ Â¤â€”/Ã Â¤Â¸Ã Â¤Â°Ã Â¥ÂÃ Â¤Å¡ Ã Â¤Â¸Ã Â¥â€¡ Ã Â¤Â¬Ã Â¤Â¾Ã Â¤Â¹Ã Â¤Â° Ã Â¤Â°Ã Â¤â€“Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.jetbrains.tune": "JetBrains IDE: Ã Â¤â€¦Ã Â¤Â¨Ã Â¤Â¾Ã Â¤ÂµÃ Â¤Â¶Ã Â¥ÂÃ Â¤Â¯Ã Â¤â€¢ Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â²Ã Â¤â€”Ã Â¤â€¡Ã Â¤Â¨Ã Â¥ÂÃ Â¤Â¸ Ã Â¤Â¬Ã Â¤â€šÃ Â¤Â¦ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š, build Ã Â¤â€ Ã Â¤â€°Ã Â¤Å¸Ã Â¤ÂªÃ Â¥ÂÃ Â¤Å¸ Ã Â¤â€¢Ã Â¥â€¹ Ã Â¤â€¡Ã Â¤â€šÃ Â¤Â¡Ã Â¥â€¡Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¸Ã Â¤Â¿Ã Â¤â€šÃ Â¤â€” Ã Â¤Â¸Ã Â¥â€¡ Ã Â¤Â¹Ã Â¤Å¸Ã Â¤Â¾Ã Â¤ÂÃ Â¤Â Ã Â¤â€Ã Â¤Â° Ã Â¤Å“Ã Â¤Â°Ã Â¥â€šÃ Â¤Â°Ã Â¤Â¤ Ã Â¤Â¹Ã Â¥â€¹ Ã Â¤Â¤Ã Â¥â€¹ heap Ã Â¤Â¬Ã Â¤Â¢Ã Â¤Â¼Ã Â¤Â¾Ã Â¤ÂÃ Â¤ÂÃ Â¥Â¤",
+      "suggest.vs.parallel": "Visual Studio: Ã Â¤Â¸Ã Â¤Â®Ã Â¤Â¾Ã Â¤Â¨Ã Â¤Â¾Ã Â¤â€šÃ Â¤Â¤Ã Â¤Â° Ã Â¤Â¬Ã Â¤Â¿Ã Â¤Â²Ã Â¥ÂÃ Â¤Â¡ Ã Â¤Â¸Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â® Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š Ã Â¤â€Ã Â¤Â° Ã Â¤â€¦Ã Â¤Â¨Ã Â¤Â¾Ã Â¤ÂµÃ Â¤Â¶Ã Â¥ÂÃ Â¤Â¯Ã Â¤â€¢ Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¥â€¹Ã Â¤Å“Ã Â¥â€¡Ã Â¤â€¢Ã Â¥ÂÃ Â¤Å¸ Ã Â¤â€¦Ã Â¤Â¨Ã Â¤Â²Ã Â¥â€¹Ã Â¤Â¡ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.xcode.derived": "Xcode: Ã Â¤â€¡Ã Â¤â€šÃ Â¤Â¡Ã Â¥â€¡Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¸Ã Â¤Â¿Ã Â¤â€šÃ Â¤â€”/Ã Â¤Â¬Ã Â¤Â¿Ã Â¤Â²Ã Â¥ÂÃ Â¤Â¡ Ã Â¤Â§Ã Â¥â‚¬Ã Â¤Â®Ã Â¤Â¾ Ã Â¤Â¹Ã Â¥â€¹ Ã Â¤Â¤Ã Â¥â€¹ DerivedData Ã Â¤Â¸Ã Â¤Â¾Ã Â¤Â« Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.android.accel": "Android Studio: Ã Â¤ÂÃ Â¤Â®Ã Â¥ÂÃ Â¤Â²Ã Â¥â€¡Ã Â¤Å¸Ã Â¤Â° Ã Â¤Â¹Ã Â¤Â¾Ã Â¤Â°Ã Â¥ÂÃ Â¤Â¡Ã Â¤ÂµÃ Â¥â€¡Ã Â¤Â¯Ã Â¤Â° Ã Â¤ÂÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â¸Ã Â¥â€¡Ã Â¤Â²Ã Â¥â€¡Ã Â¤Â°Ã Â¥â€¡Ã Â¤Â¶Ã Â¤Â¨ Ã Â¤Â¸Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â® Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š Ã Â¤â€Ã Â¤Â° Gradle Ã Â¤â€¢Ã Â¥Ë†Ã Â¤Â¶ Ã Â¤Â¤Ã Â¥â€¡Ã Â¤Å“Ã Â¤Â¼ Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¥â€¹Ã Â¤Â°Ã Â¥â€¡Ã Â¤Å“ Ã Â¤ÂªÃ Â¤Â° Ã Â¤Â°Ã Â¤â€“Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.node.lts": "Node.js: Ã Â¤Â¨Ã Â¤ÂµÃ Â¥â‚¬Ã Â¤Â¨Ã Â¤Â¤Ã Â¤Â® LTS Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â¯Ã Â¥â€¹Ã Â¤â€” Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š Ã Â¤â€Ã Â¤Â° Ã Â¤Â¡Ã Â¤Â¿Ã Â¤ÂªÃ Â¥â€¡Ã Â¤â€šÃ Â¤Â¡Ã Â¥â€¡Ã Â¤â€šÃ Â¤Â¸Ã Â¥â‚¬ SSD Ã Â¤ÂªÃ Â¤Â° Ã Â¤Â°Ã Â¤â€“Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.ts.incremental": "TypeScript: Ã Â¤Â¬Ã Â¤Â¡Ã Â¤Â¼Ã Â¥â€¡ Ã Â¤â€¢Ã Â¥â€¹Ã Â¤Â¡Ã Â¤Â¬Ã Â¥â€¡Ã Â¤Â¸ Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤Â²Ã Â¤Â¿Ã Â¤Â incremental builds Ã Â¤Â¯Ã Â¤Â¾ project references Ã Â¤Â¸Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â® Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.python.venv": "Python: Ã Â¤â€¡Ã Â¤â€šÃ Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¥â€°Ã Â¤Â² Ã Â¤â€¢Ã Â¥â€¹ Ã Â¤â€¦Ã Â¤Â²Ã Â¤â€” Ã Â¤Â°Ã Â¤â€“Ã Â¤Â¨Ã Â¥â€¡ Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤Â²Ã Â¤Â¿Ã Â¤Â virtual environments Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â¯Ã Â¥â€¹Ã Â¤â€” Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.java.lts": "Java: Ã Â¤ÂµÃ Â¤Â°Ã Â¥ÂÃ Â¤Â¤Ã Â¤Â®Ã Â¤Â¾Ã Â¤Â¨ LTS JDK Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â¯Ã Â¥â€¹Ã Â¤â€” Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š Ã Â¤â€Ã Â¤Â° build caches (Gradle/Maven) Ã Â¤Â¸Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â® Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.docker.windows": "Docker Desktop (Windows): WSL2 backend Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â¯Ã Â¥â€¹Ã Â¤â€” Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š Ã Â¤â€Ã Â¤Â° CPU/RAM Ã Â¤Â¸Ã Â¥â‚¬Ã Â¤Â®Ã Â¤Â¾ Ã Â¤Å¸Ã Â¥ÂÃ Â¤Â¯Ã Â¥â€šÃ Â¤Â¨ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "suggest.docker.mac": "Docker Desktop (macOS): CPU/RAM Ã Â¤Â¸Ã Â¥â‚¬Ã Â¤Â®Ã Â¤Â¾ Ã Â¤â€Ã Â¤Â° file sharing Ã Â¤Å¸Ã Â¥ÂÃ Â¤Â¯Ã Â¥â€šÃ Â¤Â¨ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š (VirtioFS Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â²Ã Â¤Â¬Ã Â¥ÂÃ Â¤Â§ Ã Â¤Â¹Ã Â¥â€¹ Ã Â¤Â¤Ã Â¥â€¹)Ã Â¥Â¤",
+      "checklist.osDrivers": "OS Ã Â¤â€Ã Â¤Â° Ã Â¤Â¡Ã Â¥ÂÃ Â¤Â°Ã Â¤Â¾Ã Â¤â€¡Ã Â¤ÂµÃ Â¤Â° (GPU, chipset, WiÃ¢â‚¬â€˜Fi/LAN) Ã Â¤â€¢Ã Â¥â€¹ Ã Â¤Â¨Ã Â¤ÂµÃ Â¥â‚¬Ã Â¤Â¨Ã Â¤Â¤Ã Â¤Â® Ã Â¤Â¸Ã Â¥ÂÃ Â¤Â¥Ã Â¤Â¿Ã Â¤Â° Ã Â¤Â¸Ã Â¤â€šÃ Â¤Â¸Ã Â¥ÂÃ Â¤â€¢Ã Â¤Â°Ã Â¤Â£Ã Â¥â€¹Ã Â¤â€š Ã Â¤ÂªÃ Â¤Â° Ã Â¤â€¦Ã Â¤ÂªÃ Â¤Â¡Ã Â¥â€¡Ã Â¤Å¸ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "checklist.powerPlan": "Ã Â¤â€¢Ã Â¥â€¹Ã Â¤Â¡Ã Â¤Â¿Ã Â¤â€šÃ Â¤â€” Ã Â¤Â¯Ã Â¤Â¾ Ã Â¤Â¬Ã Â¤Â¿Ã Â¤Â²Ã Â¥ÂÃ Â¤Â¡ Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤Â¦Ã Â¥Å’Ã Â¤Â°Ã Â¤Â¾Ã Â¤Â¨ High/Best Performance Ã Â¤ÂªÃ Â¤Â¾Ã Â¤ÂµÃ Â¤Â° Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â²Ã Â¤Â¾Ã Â¤Â¨ Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â¯Ã Â¥â€¹Ã Â¤â€” Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "checklist.startupApps": "Ã Â¤â€¦Ã Â¤Â¨Ã Â¤Â¾Ã Â¤ÂµÃ Â¤Â¶Ã Â¥ÂÃ Â¤Â¯Ã Â¤â€¢ Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¾Ã Â¤Â°Ã Â¥ÂÃ Â¤Å¸Ã Â¤â€¦Ã Â¤Âª Ã Â¤ÂÃ Â¤ÂªÃ Â¥ÂÃ Â¤Â¸ Ã Â¤â€Ã Â¤Â° Ã Â¤Â¬Ã Â¥Ë†Ã Â¤â€¢Ã Â¤â€”Ã Â¥ÂÃ Â¤Â°Ã Â¤Â¾Ã Â¤â€°Ã Â¤â€šÃ Â¤Â¡ Ã Â¤Â¸Ã Â¥â€¡Ã Â¤ÂµÃ Â¤Â¾Ã Â¤ÂÃ Â¤Â Ã Â¤Â¬Ã Â¤â€šÃ Â¤Â¦ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "checklist.diskSpace": "Ã Â¤â€¢Ã Â¤Â® Ã Â¤Â¸Ã Â¥â€¡ Ã Â¤â€¢Ã Â¤Â® 20% Ã Â¤Â¡Ã Â¤Â¿Ã Â¤Â¸Ã Â¥ÂÃ Â¤â€¢ Ã Â¤â€“Ã Â¤Â¾Ã Â¤Â²Ã Â¥â‚¬ Ã Â¤Â°Ã Â¤â€“Ã Â¥â€¡Ã Â¤â€š; Ã Â¤Â¡Ã Â¤Â¿Ã Â¤Â¸Ã Â¥ÂÃ Â¤â€¢ Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â²Ã Â¥â‚¬Ã Â¤Â¨Ã Â¤â€¦Ã Â¤Âª Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š Ã Â¤â€Ã Â¤Â° Ã Â¤Â¬Ã Â¤Â¡Ã Â¤Â¼Ã Â¥â€¡ Ã Â¤Å¸Ã Â¥â€¡Ã Â¤Â®Ã Â¥ÂÃ Â¤Âª Ã Â¤Â«Ã Â¤Â¾Ã Â¤â€¡Ã Â¤Â² Ã Â¤Â¹Ã Â¤Å¸Ã Â¤Â¾Ã Â¤ÂÃ Â¤ÂÃ Â¥Â¤",
+      "checklist.ssd": "Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¥â€¹Ã Â¤Å“Ã Â¥â€¡Ã Â¤â€¢Ã Â¥ÂÃ Â¤Å¸ Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤Â²Ã Â¤Â¿Ã Â¤Â SSD Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â¯Ã Â¥â€¹Ã Â¤â€” Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š; Ã Â¤Â§Ã Â¥â‚¬Ã Â¤Â®Ã Â¥â€¡ Ã Â¤Â¬Ã Â¤Â¾Ã Â¤Â¹Ã Â¤Â°Ã Â¥â‚¬ Ã Â¤Â¡Ã Â¥ÂÃ Â¤Â°Ã Â¤Â¾Ã Â¤â€¡Ã Â¤Âµ Ã Â¤ÂªÃ Â¤Â° Ã Â¤Â­Ã Â¤Â¾Ã Â¤Â°Ã Â¥â‚¬ Ã Â¤Â¬Ã Â¤Â¿Ã Â¤Â²Ã Â¥ÂÃ Â¤Â¡ Ã Â¤Â¸Ã Â¥â€¡ Ã Â¤Â¬Ã Â¤Å¡Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "checklist.visualEffects": "Ã Â¤Â¤Ã Â¥â€¡Ã Â¤Å“Ã Â¤Â¼ UI Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤Â²Ã Â¤Â¿Ã Â¤Â Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Å“Ã Â¤Â¼Ã Â¥ÂÃ Â¤â€¦Ã Â¤Â² Ã Â¤â€¡Ã Â¤Â«Ã Â¥â€¡Ã Â¤â€¢Ã Â¥ÂÃ Â¤Å¸/Ã Â¤ÂÃ Â¤Â¨Ã Â¤Â¿Ã Â¤Â®Ã Â¥â€¡Ã Â¤Â¶Ã Â¤Â¨ Ã Â¤â€¢Ã Â¤Â® Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "checklist.antivirus": "Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¥â€¹Ã Â¤Å“Ã Â¥â€¡Ã Â¤â€¢Ã Â¥ÂÃ Â¤Å¸ Ã Â¤Â«Ã Â¥â€¹Ã Â¤Â²Ã Â¥ÂÃ Â¤Â¡Ã Â¤Â° (node_modules, build, dist) Ã Â¤â€¢Ã Â¥â€¹ Ã Â¤Â°Ã Â¤Â¿Ã Â¤Â¯Ã Â¤Â²Ã¢â‚¬â€˜Ã Â¤Å¸Ã Â¤Â¾Ã Â¤â€¡Ã Â¤Â® Ã Â¤ÂÃ Â¤â€šÃ Â¤Å¸Ã Â¥â‚¬Ã Â¤ÂµÃ Â¤Â¾Ã Â¤Â¯Ã Â¤Â°Ã Â¤Â¸ Ã Â¤Â¸Ã Â¥ÂÃ Â¤â€¢Ã Â¥Ë†Ã Â¤Â¨ Ã Â¤Â¸Ã Â¥â€¡ Ã Â¤Â¬Ã Â¤Â¾Ã Â¤Â¹Ã Â¤Â° Ã Â¤Â°Ã Â¤â€“Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "checklist.wifi": "Ethernet Ã Â¤Â¯Ã Â¤Â¾ Ã Â¤Â®Ã Â¤Å“Ã Â¤Â¬Ã Â¥â€šÃ Â¤Â¤ 5GHz WiÃ¢â‚¬â€˜Fi Ã Â¤â€°Ã Â¤ÂªÃ Â¤Â¯Ã Â¥â€¹Ã Â¤â€” Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š; Ã Â¤Â°Ã Â¤Â¾Ã Â¤â€°Ã Â¤Å¸Ã Â¤Â° Ã Â¤Â«Ã Â¤Â°Ã Â¥ÂÃ Â¤Â®Ã Â¤ÂµÃ Â¥â€¡Ã Â¤Â¯Ã Â¤Â° Ã Â¤â€¦Ã Â¤ÂªÃ Â¤Â¡Ã Â¥â€¡Ã Â¤Å¸ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š Ã Â¤â€Ã Â¤Â° Ã Â¤Â¸Ã Â¤Â®Ã Â¤Â¯Ã¢â‚¬â€˜Ã Â¤Â¸Ã Â¤Â®Ã Â¤Â¯ Ã Â¤ÂªÃ Â¤Â° Ã Â¤Â°Ã Â¥â‚¬Ã Â¤Â¸Ã Â¥ÂÃ Â¤Å¸Ã Â¤Â¾Ã Â¤Â°Ã Â¥ÂÃ Â¤Å¸ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "checklist.dns": "Ã Â¤Â¤Ã Â¥â€¡Ã Â¤Å“Ã Â¤Â¼ DNS Ã Â¤Â¸Ã Â¥â€¡Ã Â¤Å¸ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š Ã Â¤â€Ã Â¤Â° Ã Â¤ÂªÃ Â¥Ë†Ã Â¤â€¢Ã Â¥â€¡Ã Â¤Å“ Ã Â¤Â¡Ã Â¤Â¾Ã Â¤â€°Ã Â¤Â¨Ã Â¤Â²Ã Â¥â€¹Ã Â¤Â¡ Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤Â²Ã Â¤Â¿Ã Â¤Â Ã Â¤â€¢Ã Â¤Â® Ã Â¤Â²Ã Â¥Ë†Ã Â¤Å¸Ã Â¥â€¡Ã Â¤â€šÃ Â¤Â¸Ã Â¥â‚¬ Ã Â¤Å“Ã Â¤Â¾Ã Â¤ÂÃ Â¤Å¡Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "checklist.browser": "Ã Â¤Â¬Ã Â¥ÂÃ Â¤Â°Ã Â¤Â¾Ã Â¤â€°Ã Â¤Å“Ã Â¤Â¼Ã Â¤Â° Ã Â¤Å¸Ã Â¥Ë†Ã Â¤Â¬ Ã Â¤Â¸Ã Â¥â‚¬Ã Â¤Â®Ã Â¤Â¿Ã Â¤Â¤ Ã Â¤Â°Ã Â¤â€“Ã Â¥â€¡Ã Â¤â€š Ã Â¤â€Ã Â¤Â° Ã Â¤Â¬Ã Â¤Â¿Ã Â¤Â²Ã Â¥ÂÃ Â¤Â¡ Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤Â¦Ã Â¥Å’Ã Â¤Â°Ã Â¤Â¾Ã Â¤Â¨ Ã Â¤Â­Ã Â¤Â¾Ã Â¤Â°Ã Â¥â‚¬ Ã Â¤ÂÃ Â¤ÂªÃ Â¥ÂÃ Â¤Â¸ Ã Â¤Â¬Ã Â¤â€šÃ Â¤Â¦ Ã Â¤Â°Ã Â¤â€“Ã Â¥â€¡Ã Â¤â€šÃ Â¥Â¤",
+      "checklist.hwAccel": "Ã Â¤Å“Ã Â¤Â¹Ã Â¤Â¾Ã Â¤Â Ã Â¤Â¸Ã Â¤Â®Ã Â¤Â°Ã Â¥ÂÃ Â¤Â¥Ã Â¤Â¿Ã Â¤Â¤ Ã Â¤Â¹Ã Â¥â€¹ Ã Â¤ÂµÃ Â¤Â¹Ã Â¤Â¾Ã Â¤Â Ã Â¤Â¹Ã Â¤Â¾Ã Â¤Â°Ã Â¥ÂÃ Â¤Â¡Ã Â¤ÂµÃ Â¥â€¡Ã Â¤Â¯Ã Â¤Â° Ã Â¤ÂÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â¸Ã Â¥â€¡Ã Â¤Â²Ã Â¥â€¡Ã Â¤Â°Ã Â¥â€¡Ã Â¤Â¶Ã Â¤Â¨ Ã Â¤Â¸Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â® Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š (Ã Â¤Â¬Ã Â¥ÂÃ Â¤Â°Ã Â¤Â¾Ã Â¤â€°Ã Â¤Å“Ã Â¤Â¼Ã Â¤Â°/IDE)Ã Â¥Â¤",
+      "checklist.cliTools": "CLI Ã Â¤Å¸Ã Â¥â€šÃ Â¤Â²Ã Â¥ÂÃ Â¤Â¸ Ã Â¤â€¦Ã Â¤ÂªÃ Â¤Â¡Ã Â¥â€¡Ã Â¤Å¸ Ã Â¤Â°Ã Â¤â€“Ã Â¥â€¡Ã Â¤â€š (Node.js, npm, Git, Docker, Java)Ã Â¥Â¤",
+      "checklist.reboot": "Ã Â¤Â¬Ã Â¤Â¡Ã Â¤Â¼Ã Â¥â€¡ Ã Â¤â€¦Ã Â¤ÂªÃ Â¤Â¡Ã Â¥â€¡Ã Â¤Å¸ Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤Â¬Ã Â¤Â¾Ã Â¤Â¦ Ã Â¤Â°Ã Â¥â‚¬Ã Â¤Â¬Ã Â¥â€šÃ Â¤Å¸ Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š Ã Â¤Â¤Ã Â¤Â¾Ã Â¤â€¢Ã Â¤Â¿ Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¤Â¾Ã Â¤Â¨Ã Â¥â€¡ Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¥â€¹Ã Â¤Â¸Ã Â¥â€¡Ã Â¤Â¸ Ã Â¤Â¸Ã Â¤Â¾Ã Â¤Â« Ã Â¤Â¹Ã Â¥â€¹Ã Â¤â€šÃ Â¥Â¤"
+    }
+  },
+  ar: {
+    dir: "rtl",
+    strings: {
+      "app.title": "Developer Diagnostics Kit",
+      "app.badge": "Windows + macOS",
+      "platform.windows": "Windows",
+      "platform.macos": "macOS",
+      "language.title": "Ø§Ø®ØªØ± Ø§Ù„Ù„ØºØ©",
+      "language.subtitle": "ÙŠÙ…ÙƒÙ†Ù†Ø§ Ø§Ù„ÙƒØ´Ù ØªÙ„Ù‚Ø§Ø¦ÙŠØ§Ù‹ Ø¨Ù†Ø§Ø¡Ù‹ Ø¹Ù„Ù‰ Ù…Ù†Ø·Ù‚ØªÙƒ.",
+      "language.auto": "Ø§ÙƒØªØ´Ø§Ù Ø§Ù„Ù„ØºØ© ØªÙ„Ù‚Ø§Ø¦ÙŠØ§Ù‹",
+      "language.manual": "Ø£Ùˆ Ø§Ø®ØªØ± ÙŠØ¯ÙˆÙŠØ§Ù‹",
+      "language.continue": "Ù…ØªØ§Ø¨Ø¹Ø©",
+      "language.status.idle": "Ø¨Ø§Ù†ØªØ¸Ø§Ø±.",
+      "language.status.detecting": "Ø¬Ø§Ø±Ù Ø§ÙƒØªØ´Ø§Ù Ø§Ù„Ù„ØºØ©...",
+      "language.status.detected": "ØªÙ… Ø§Ù„ÙƒØ´Ù: {language}.",
+      "language.status.failed": "ØªØ¹Ø°Ø± Ø§ÙƒØªØ´Ø§Ù Ø§Ù„Ù„ØºØ©.",
+      "language.label.enGB": "Ø§Ù„Ø¥Ù†Ø¬Ù„ÙŠØ²ÙŠØ© (Ø§Ù„Ù…Ù…Ù„ÙƒØ© Ø§Ù„Ù…ØªØ­Ø¯Ø©)",
+      "language.label.nl": "Ø§Ù„Ù‡ÙˆÙ„Ù†Ø¯ÙŠØ©",
+      "language.label.hi": "à¤¹à¤¿à¤¨à¥à¤¦à¥€",
+      "language.label.ar": "Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©",
+      "language.label.pl": "Ø§Ù„Ø¨ÙˆÙ„Ù†Ø¯ÙŠØ©",
+      "language.label.uk": "Ø§Ù„Ø£ÙˆÙƒØ±Ø§Ù†ÙŠØ©",
+      "language.label.fr": "Ø§Ù„ÙØ±Ù†Ø³ÙŠØ©",
+      "language.label.pt": "Ø§Ù„Ø¨Ø±ØªØºØ§Ù„ÙŠØ©",
+      "language.label.es": "Ø§Ù„Ø¥Ø³Ø¨Ø§Ù†ÙŠØ©",
+      "language.label.it": "Ø§Ù„Ø¥ÙŠØ·Ø§Ù„ÙŠØ©",
+      "language.label.id": "Ø§Ù„Ø¥Ù†Ø¯ÙˆÙ†ÙŠØ³ÙŠØ©",
+      "setup.title": "Ø§Ù„Ø¥Ø¹Ø¯Ø§Ø¯",
+      "setup.note": "ÙŠØ«Ø¨Øª ØªØ¨Ø¹ÙŠØ§Øª Ø§Ù„ØªØ·ÙˆÙŠØ± Ù„Ù„Ù…Ø´Ø±ÙˆØ¹ ÙˆÙŠØ´ØºÙ‘Ù„ ØªØ·Ø¨ÙŠÙ‚ Ø§Ù„ØªØ·ÙˆÙŠØ±. ÙŠÙ„Ø²Ù… ÙÙ‚Ø· Ø¹Ù†Ø¯ Ø§Ù„ØªØ´ØºÙŠÙ„ Ù…Ù† Ø§Ù„Ù…ØµØ¯Ø±.",
+      "setup.list.install": "Ø³ÙŠØ´ØºÙ‘Ù„: npm install",
+      "setup.list.start": "Ø³ÙŠØ´ØºÙ‘Ù„: npm start",
+      "setup.install": "ØªØ«Ø¨ÙŠØª Ø§Ù„ØªØ¨Ø¹ÙŠØ§Øª",
+      "setup.start": "ØªØ´ØºÙŠÙ„ Ø§Ù„ØªØ·Ø¨ÙŠÙ‚",
+      "setup.status.waiting": "Ø¨Ø§Ù†ØªØ¸Ø§Ø±.",
+      "setup.status.installing": "Ø¬Ø§Ø±Ù Ø§Ù„ØªØ«Ø¨ÙŠØª...",
+      "setup.status.starting": "Ø¬Ø§Ø±Ù Ø§Ù„ØªØ´ØºÙŠÙ„...",
+      "setup.status.done": "ØªÙ….",
+      "mode.title": "ÙˆØ¶Ø¹ Ø§Ù„Ø§Ø®ØªØ¨Ø§Ø±",
+      "mode.brief": "Ù…Ø®ØªØµØ±",
+      "mode.extensive": "Ù…ÙˆØ³Ø¹",
+      "extras.title": "Ø¥Ø¶Ø§ÙØ§Øª",
+      "extras.software": "Ø§Ù„Ø¨Ø±Ø§Ù…Ø¬/IDE",
+      "extras.dependencies": "Ø§Ù„Ø£Ø¯ÙˆØ§Øª ÙˆØ§Ù„Ù„ØºØ§Øª",
+      "extras.optimization": "ØªØ¶Ù…ÙŠÙ† ÙØ­ÙˆØµØ§Øª Ø§Ù„ØªØ­Ø³ÙŠÙ†",
+      "actions.run": "ØªØ´ØºÙŠÙ„ Ø§Ù„ØªØ´Ø®ÙŠØµ",
+      "status.ready": "Ø¬Ø§Ù‡Ø².",
+      "status.running": "Ø¬Ø§Ø±Ù ØªØ´ØºÙŠÙ„ Ø§Ù„ØªØ´Ø®ÙŠØµ {mode}...",
+      "status.complete": "Ø§ÙƒØªÙ…Ù„ Ø§Ù„ØªØ´Ø®ÙŠØµ {mode}.",
+      "status.failed": "ÙØ´Ù„ Ø§Ù„ØªØ´Ø®ÙŠØµ.",
+      "status.wrapping": "Ø¬Ø§Ø±Ù Ø§Ù„Ø¥Ù†Ù‡Ø§Ø¡...",
+      "status.exporting": "Ø¬Ø§Ø±Ù Ø­ÙØ¸ {format}...",
+      "status.export.complete": "Ø§ÙƒØªÙ…Ù„ Ø§Ù„ØªØµØ¯ÙŠØ±.",
+      "status.export.canceled": "ØªÙ… Ø¥Ù„ØºØ§Ø¡ Ø§Ù„ØªØµØ¯ÙŠØ±.",
+      "status.export.failed": "ÙØ´Ù„ Ø§Ù„ØªØµØ¯ÙŠØ±.",
+      "progress.title": "Ø¬Ø§Ø±Ù ØªØ´ØºÙŠÙ„ Ø§Ù„ØªØ´Ø®ÙŠØµ...",
+      "progress.preparing": "ØªØ­Ø¶ÙŠØ± Ø§Ù„ÙØ­ÙˆØµØ§Øª.",
+      "progress.running": "Ø¬Ø§Ø±Ù ØªØ´ØºÙŠÙ„ ÙØ­ÙˆØµØ§Øª {mode}...",
+      "results.button": "Ø§Ù„Ù†ØªØ§Ø¦Ø¬",
+      "results.title": "Ø§Ù„Ù†ØªØ§Ø¦Ø¬",
+      "results.placeholder": "Ø´ØºÙ‘Ù„ Ø§Ù„ØªØ´Ø®ÙŠØµ Ù„Ø±Ø¤ÙŠØ© Ø§Ù„Ù†ØªØ§Ø¦Ø¬.",
+      "export.title": "ØªØµØ¯ÙŠØ± Ø§Ù„Ù†ØªØ§Ø¦Ø¬",
+      "export.button": "ØªØµØ¯ÙŠØ± Ø§Ù„Ù†ØªØ§Ø¦Ø¬",
+      "export.previous": "Ø§Ù„Ø³Ø§Ø¨Ù‚",
+      "results.status.ready": "Ø¬Ø§Ù‡Ø².",
+      "results.status.running": "Ø¬Ø§Ø±Ù Ø§Ù„ØªÙ†ÙÙŠØ°...",
+      "results.status.complete": "Ù…ÙƒØªÙ…Ù„.",
+      "results.status.failed": "ÙØ´Ù„.",
+      "suggestions.title": "Ø§Ù‚ØªØ±Ø§Ø­Ø§Øª Ø§Ù„ØªØ­Ø³ÙŠÙ†",
+      "suggestions.placeholder": "Ø´ØºÙ‘Ù„ Ø§Ù„ØªØ´Ø®ÙŠØµ Ù„Ø±Ø¤ÙŠØ© Ø§Ù„Ø§Ù‚ØªØ±Ø§Ø­Ø§Øª.",
+      "actions.close": "Ø¥ØºÙ„Ø§Ù‚ Ø§Ù„ØªØ·Ø¨ÙŠÙ‚",
+      "modal.title": "ØªØµØ¯ÙŠØ± Ø§Ù„Ù†ØªØ§Ø¦Ø¬",
+      "modal.subtitle": "Ø§Ø®ØªØ± ØªÙ†Ø³ÙŠÙ‚Ø§Ù‹:",
+      "modal.cancel": "Ø¥Ù„ØºØ§Ø¡",
+      "results.brief.title": "Ù†Ø¸Ø±Ø© Ù…Ø®ØªØµØ±Ø©",
+      "results.extensive.title": "ØªØ´Ø®ÙŠØµ Ù…ÙˆØ³Ø¹",
+      "section.os": "Ù†Ø¸Ø§Ù… Ø§Ù„ØªØ´ØºÙŠÙ„",
+      "section.cpu": "CPU (Ø§Ù„Ù…Ø¹Ø§Ù„Ø¬)",
+      "section.ram": "ÙˆØ­Ø¯Ø§Øª RAM",
+      "section.gpu": "GPU (Ø¨Ø·Ø§Ù‚Ø© Ø§Ù„Ø±Ø³ÙˆÙ…)",
+      "section.internet": "Ø§Ù„Ø¥Ù†ØªØ±Ù†Øª",
+      "section.network": "Ø§Ù„Ø´Ø¨ÙƒØ©",
+      "section.system": "Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§Ù„Ù†Ø¸Ø§Ù…",
+      "section.process": "Ø§Ù„Ø¹Ù…Ù„ÙŠØ©",
+      "section.app": "Ø§Ù„ØªØ·Ø¨ÙŠÙ‚",
+      "section.work": "Ø§Ù„Ø¬Ø§Ù‡Ø²ÙŠØ© Ù„Ù„Ø¹Ù…Ù„",
+      "section.cli": "Ø£Ø¯ÙˆØ§Øª CLI",
+      "section.software": "Ø§Ù„Ø¨Ø±Ø§Ù…Ø¬/IDE Ø§Ù„Ù…Ø«Ø¨ØªØ©",
+      "section.dependencies": "Ø§Ù„Ø£Ø¯ÙˆØ§Øª ÙˆØ§Ù„Ù„ØºØ§Øª",
+      "section.suggestions": "Ø§Ù„Ø§Ù‚ØªØ±Ø§Ø­Ø§Øª",
+      "label.version": "Ø§Ù„Ø¥ØµØ¯Ø§Ø±",
+      "label.release": "Ø§Ù„Ù†Ø³Ø®Ø©",
+      "label.arch": "Ø§Ù„Ù…Ø¹Ù…Ø§Ø±ÙŠØ©",
+      "label.hostname": "Ø§Ø³Ù… Ø§Ù„Ù…Ø¶ÙŠÙ",
+      "label.ip": "ip",
+      "label.updateStatus": "Ø­Ø§Ù„Ø© Ø§Ù„ØªØ­Ø¯ÙŠØ«",
+      "label.vendor": "Ø§Ù„Ù…ÙˆØ±Ù‘Ø¯",
+      "label.model": "Ø§Ù„Ø·Ø±Ø§Ø²",
+      "label.cores": "Ø§Ù„Ø£Ù†ÙˆÙŠØ©",
+      "label.installed": "Ù…Ø«Ø¨Øª",
+      "label.totalSpeed": "Ø§Ù„Ø³Ø±Ø¹Ø© Ø§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠØ©",
+      "label.voltage": "Ø§Ù„Ø¬Ù‡Ø¯",
+      "label.loadAvg": "Ù…ØªÙˆØ³Ø· Ø§Ù„Ø­Ù…Ù„",
+      "label.total": "Ø§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠ",
+      "label.used": "Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…",
+      "label.free": "Ø§Ù„Ù…ØªØ§Ø­",
+      "label.intellijCap": "Ø­Ø¯ IntelliJ",
+      "label.altIdeCaps": "Ø­Ø¯ÙˆØ¯ IDE Ø§Ù„Ø¨Ø¯ÙŠÙ„Ø©",
+      "label.driver": "Ø§Ù„ØªØ¹Ø±ÙŠÙ",
+      "label.speed": "Ø§Ù„Ø³Ø±Ø¹Ø©",
+      "label.test": "Ø§Ù„Ø§Ø®ØªØ¨Ø§Ø±",
+      "label.download": "ØªÙ†Ø²ÙŠÙ„",
+      "label.upload": "Ø±ÙØ¹",
+      "label.ping": "ping",
+      "label.status": "Ø§Ù„Ø­Ø§Ù„Ø©",
+      "label.gateway": "Ø§Ù„Ø¨ÙˆØ§Ø¨Ø©",
+      "label.routerFirmware": "Ø¨Ø±Ø§Ù…Ø¬ Ø§Ù„Ø±Ø§ÙˆØªØ±",
+      "label.wifi": "wifi",
+      "label.signal": "Ø§Ù„Ø¥Ø´Ø§Ø±Ø©",
+      "label.lan": "lan",
+      "label.power": "Ø§Ù„Ø·Ø§Ù‚Ø©",
+      "label.name": "Ø§Ù„Ø§Ø³Ù…",
+      "label.electron": "electron",
+      "label.node": "node",
+      "label.chrome": "chrome",
+      "label.javaHome": "java home",
+      "label.platform": "Ø§Ù„Ù…Ù†ØµØ©",
+      "label.missingEssentials": "Ø§Ù„Ø£Ø³Ø§Ø³ÙŠØ§Øª Ø§Ù„Ù…ÙÙ‚ÙˆØ¯Ø©",
+      "brief.os": "OS",
+      "brief.arch": "arch",
+      "brief.cpu": "CPU",
+      "brief.ram": "RAM",
+      "brief.gpu": "GPU",
+      "brief.internet": "Internet",
+      "brief.cli": "Ø£Ø¯ÙˆØ§Øª CLI",
+      "brief.software": "Ø§Ù„Ø¨Ø±Ø§Ù…Ø¬/IDE",
+      "brief.dependencies": "Ø§Ù„Ø£Ø¯ÙˆØ§Øª ÙˆØ§Ù„Ù„ØºØ§Øª",
+      "brief.missing": "Ø§Ù„Ø£Ø³Ø§Ø³ÙŠØ§Øª Ø§Ù„Ù…ÙÙ‚ÙˆØ¯Ø©",
+      "note.skipped": "ØªÙ… Ø§Ù„ØªØ®Ø·ÙŠ (Ø´ØºÙ‘Ù„ Ø§Ù„ÙØ­Øµ Ø§Ù„Ù…ÙˆØ³Ø¹ Ù„Ø§Ø®ØªØ¨Ø§Ø± Ø§Ù„Ø³Ø±Ø¹Ø©)",
+      "note.optimization.disabled": "ØªÙ… ØªØ¹Ø·ÙŠÙ„ ÙØ­ÙˆØµØ§Øª Ø§Ù„ØªØ­Ø³ÙŠÙ†.",
+      "note.noDiagnostics": "Ù„Ø§ ØªÙˆØ¬Ø¯ ØªØ´Ø®ÙŠØµØ§Øª Ù…ØªØ§Ø­Ø©.",
+      "note.noIssues": "Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ø´ÙƒÙ„Ø§Øª ÙÙˆØ±ÙŠØ©. Ø§Ù„Ù†Ø¸Ø§Ù… ÙŠØ¨Ø¯Ùˆ Ø³Ù„ÙŠÙ…Ø§Ù‹.",
+      "note.potential": "ØªØ­Ø³ÙŠÙ† Ù…Ø­ØªÙ…Ù„ (ØªÙ‚Ø¯ÙŠØ±): {min}-{max}%.",
+      "note.missing.none": "Ù„Ø§ ÙŠÙˆØ¬Ø¯",
+      "note.na": "n/a",
+      "suggest.checklist.brief": "Ù‚Ø§Ø¦Ù…Ø© Ø¨Ø¯Ø¡ Ø§Ù„Ø¹Ù…Ù„: ØªØ£ÙƒØ¯ Ù…Ù† ØªØ«Ø¨ÙŠØª Ø§Ù„Ø£Ø¯ÙˆØ§Øª Ø§Ù„Ø£Ø³Ø§Ø³ÙŠØ© ÙˆØ£Ù† Ø¹Ù…Ù„ÙŠØ§Øª Ø§Ù„Ø¨Ù†Ø§Ø¡ ØªØ¹Ù…Ù„.",
+      "suggest.checklist.extensive": "Ù‚Ø§Ø¦Ù…Ø© Ø£Ù‚ØµÙ‰ Ø£Ø¯Ø§Ø¡: Ø±ÙƒÙ‘Ø² Ø¹Ù„Ù‰ Ø§Ù„Ø®Ø·ÙˆØ§Øª Ø§Ù„ØªÙŠ ØªØ­Ø³Ù† Ø§Ù„Ø³Ø±Ø¹Ø© ÙˆØ§Ù„ÙƒÙØ§Ø¡Ø©.",
+      "suggest.memory.low": "Ø°Ø§ÙƒØ±Ø© Ø­Ø±Ø© Ù…Ù†Ø®ÙØ¶Ø©: Ø£ØºÙ„Ù‚ Ø§Ù„ØªØ·Ø¨ÙŠÙ‚Ø§Øª ØºÙŠØ± Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…Ø© Ø£Ùˆ Ø£Ø¹Ø¯ Ø§Ù„ØªØ´ØºÙŠÙ„ Ù„ØªØ­Ø±ÙŠØ± RAM.",
+      "suggest.memory.veryHigh": "Ø§Ø³ØªØ®Ø¯Ø§Ù… RAM >= 90%: Ø£ØºÙ„Ù‚ Ø§Ù„ØªØ·Ø¨ÙŠÙ‚Ø§Øª Ø§Ù„Ø«Ù‚ÙŠÙ„Ø©ØŒ Ø£ÙˆÙ‚Ù Ø§Ù„Ø¨Ù†Ø§Ø¡ Ù…Ø¤Ù‚ØªØ§Ù‹ Ø£Ùˆ Ø²Ø¯ RAM.",
+      "suggest.memory.high": "Ø§Ø³ØªØ®Ø¯Ø§Ù… RAM >= 80%: ÙÙƒÙ‘Ø± ÙÙŠ Ø¥ØºÙ„Ø§Ù‚ Ø§Ù„ØªØ·Ø¨ÙŠÙ‚Ø§Øª Ø£Ùˆ Ø²ÙŠØ§Ø¯Ø© RAM Ø¥Ø°Ø§ ÙƒØ§Ù† Ø°Ù„Ùƒ Ù…ØªÙƒØ±Ø±Ø§Ù‹.",
+      "suggest.memory.reserve": "Ø§Ø­ÙØ¸ 20% Ù…Ù† RAM Ù„Ù„ÙƒØ§Ø´ ÙˆÙ…Ù‡Ø§Ù… Ø§Ù„Ù†Ø¸Ø§Ù…Ø› 10% Ù‡Ùˆ Ø§Ù„Ø­Ø¯ Ø§Ù„Ø£Ø¯Ù†Ù‰ Ù„ØªØ¬Ù†Ø¨ Ø§Ù„Ø¨Ø·Ø¡.",
+      "suggest.cpu.high": "Ø­Ù…Ù„ CPU Ù…Ø±ØªÙØ¹: ØªØ­Ù‚Ù‚ Ù…Ù† Ù…Ø¯ÙŠØ± Ø§Ù„Ù…Ù‡Ø§Ù… Ù„Ù„Ø¹Ù…Ù„ÙŠØ§Øª Ø§Ù„Ø«Ù‚ÙŠÙ„Ø©.",
+      "suggest.internet.failed": "ÙØ´Ù„ Ø§Ø®ØªØ¨Ø§Ø± Ø§Ù„Ø¥Ù†ØªØ±Ù†Øª: ØªØ­Ù‚Ù‚ Ù…Ù† Ø§Ù„Ø§ØªØµØ§Ù„ Ø£Ùˆ Ø§Ù„Ø¬Ø¯Ø§Ø± Ø§Ù„Ù†Ø§Ø±ÙŠ.",
+      "suggest.internet.latency": "Ø²Ù…Ù† Ø§Ø³ØªØ¬Ø§Ø¨Ø© Ø§Ù„Ø¥Ù†ØªØ±Ù†Øª Ù…Ø±ØªÙØ¹: Ø¬Ø±Ù‘Ø¨ Ø´Ø¨ÙƒØ© Ø£Ø®Ø±Ù‰ Ø£Ùˆ Ø£Ø¹Ø¯ ØªØ´ØºÙŠÙ„ Ø§Ù„Ø±Ø§ÙˆØªØ±.",
+      "suggest.os.updates": "ØªØ­Ø¯ÙŠØ«Ø§Øª macOS Ù…ØªØ§Ø­Ø©: Ø«Ø¨Ù‘Øª Ø¢Ø®Ø± Ø§Ù„ØªØ­Ø¯ÙŠØ«Ø§Øª.",
+      "suggest.gpu.full": "Ø´ØºÙ‘Ù„ Ø§Ù„ØªØ´Ø®ÙŠØµ Ø§Ù„ÙƒØ§Ù…Ù„ Ù„ØªØ¶Ù…ÙŠÙ† GPU ÙˆØªÙØ§ØµÙŠÙ„ Ø§Ù„Ø¹Ù…Ù„ÙŠØ§Øª.",
+      "suggest.ide.cap": "ØªÙ… Ø§ÙƒØªØ´Ø§Ù Ø­Ø¯ JetBrains IDE: Ø²Ø¯ heap Ø¥Ø°Ø§ ÙƒØ§Ù†Øª Ø§Ù„Ø£Ø¯Ø§Ø¡ Ø¨Ø·ÙŠØ¦Ø§Ù‹.",
+      "suggest.wifi.weak": "Ø¥Ø´Ø§Ø±Ø© Wiâ€‘Fi Ø¶Ø¹ÙŠÙØ© (<60%): Ø§Ù‚ØªØ±Ø¨ Ù…Ù† Ø§Ù„Ø±Ø§ÙˆØªØ± Ø£Ùˆ Ø§Ø³ØªØ®Ø¯Ù… Ethernet.",
+      "suggest.wifi.weakRssi": "Ø¥Ø´Ø§Ø±Ø© Wiâ€‘Fi Ø¶Ø¹ÙŠÙØ© (RSSI Ù…Ù†Ø®ÙØ¶): Ø§Ù‚ØªØ±Ø¨ Ù…Ù† Ø§Ù„Ø±Ø§ÙˆØªØ± Ø£Ùˆ Ø§Ø³ØªØ®Ø¯Ù… Ethernet.",
+      "suggest.power.plan": "Ø®Ø·Ø© Ø§Ù„Ø·Ø§Ù‚Ø© Ù„ÙŠØ³Øª Ø¹Ø§Ù„ÙŠØ© Ø§Ù„Ø£Ø¯Ø§Ø¡: Ø¨Ø¯Ù‘Ù„ Ø¥Ù„Ù‰ Ø£ÙØ¶Ù„/Ø£Ø¹Ù„Ù‰ Ø£Ø¯Ø§Ø¡ Ø£Ø«Ù†Ø§Ø¡ Ø§Ù„Ø¨Ø±Ù…Ø¬Ø© Ø£Ùˆ Ø§Ù„Ø¨Ù†Ø§Ø¡.",
+      "suggest.vscode.extensions": "VS Code: Ø¹Ø·Ù‘Ù„ Ø§Ù„Ø¥Ø¶Ø§ÙØ§Øª ØºÙŠØ± Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…Ø© ÙˆØ§Ø³ØªØ¨Ø¹Ø¯ Ù…Ø¬Ù„Ø¯Ø§Øª build/output Ù…Ù† Ø§Ù„Ù…Ø±Ø§Ù‚Ø¨Ø© ÙˆØ§Ù„Ø¨Ø­Ø«.",
+      "suggest.jetbrains.tune": "JetBrains IDEs: Ø¹Ø·Ù‘Ù„ Ø§Ù„Ø¥Ø¶Ø§ÙØ§Øª ØºÙŠØ± Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…Ø©ØŒ ÙˆØ§Ø³ØªØ¨Ø¹Ø¯ Ù…Ø®Ø±Ø¬Ø§Øª Ø§Ù„Ø¨Ù†Ø§Ø¡ Ù…Ù† Ø§Ù„ÙÙ‡Ø±Ø³Ø©ØŒ ÙˆØ²Ø¯ heap Ø¹Ù†Ø¯ Ø§Ù„Ø­Ø§Ø¬Ø©.",
+      "suggest.vs.parallel": "Visual Studio: ÙØ¹Ù‘Ù„ Ø§Ù„Ø¨Ù†Ø§Ø¡ Ø§Ù„Ù…ØªÙˆØ§Ø²ÙŠ ÙˆØ£Ù„ØºÙ ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ù…Ø´Ø§Ø±ÙŠØ¹ ØºÙŠØ± Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…Ø© Ù„ØªÙ‚Ù„ÙŠÙ„ ÙˆÙ‚Øª Ø§Ù„ØªØ­Ù…ÙŠÙ„.",
+      "suggest.xcode.derived": "Xcode: Ù†Ø¸Ù‘Ù DerivedData Ø¹Ù†Ø¯ Ø¨Ø·Ø¡ Ø§Ù„ÙÙ‡Ø±Ø³Ø© Ø£Ùˆ Ø§Ù„Ø¨Ù†Ø§Ø¡.",
+      "suggest.android.accel": "Android Studio: ÙØ¹Ù‘Ù„ ØªØ³Ø±ÙŠØ¹ Ø§Ù„Ø¹ØªØ§Ø¯ Ù„Ù„Ù…Ø­Ø§ÙƒÙŠ ÙˆØ§Ø­ØªÙØ¸ Ø¨ÙƒØ§Ø´ Gradle Ø¹Ù„Ù‰ ØªØ®Ø²ÙŠÙ† Ø³Ø±ÙŠØ¹.",
+      "suggest.node.lts": "Node.js: Ø§Ø³ØªØ®Ø¯Ù… Ø£Ø­Ø¯Ø« LTS ÙˆØ§Ø­ØªÙØ¸ Ø¨Ø§Ù„ØªØ¨Ø¹ÙŠØ§Øª Ø¹Ù„Ù‰ SSD.",
+      "suggest.ts.incremental": "TypeScript: ÙØ¹Ù‘Ù„ Ø§Ù„Ø¨Ù†Ø§Ø¡ Ø§Ù„ØªØ²Ø§ÙŠØ¯ÙŠ Ø£Ùˆ Ù…Ø±Ø§Ø¬Ø¹ Ø§Ù„Ù…Ø´Ø§Ø±ÙŠØ¹ Ù„Ù„ÙƒÙˆØ¯Ø§Øª Ø§Ù„ÙƒØ¨ÙŠØ±Ø©.",
+      "suggest.python.venv": "Python: Ø§Ø³ØªØ®Ø¯Ù… Ø¨ÙŠØ¦Ø§Øª Ø§ÙØªØ±Ø§Ø¶ÙŠØ© Ù„Ø¹Ø²Ù„ Ø§Ù„ØªØ«Ø¨ÙŠØªØ§Øª.",
+      "suggest.java.lts": "Java: Ø§Ø³ØªØ®Ø¯Ù… Ø£Ø­Ø¯Ø« JDK LTS ÙˆÙØ¹Ù‘Ù„ ÙƒØ§Ø´Ø§Øª Ø§Ù„Ø¨Ù†Ø§Ø¡ (Gradle/Maven).",
+      "suggest.docker.windows": "Docker Desktop (Windows): Ø§Ø³ØªØ®Ø¯Ù… WSL2 ÙˆØ§Ø¶Ø¨Ø· Ø­Ø¯ÙˆØ¯ CPU/RAM Ø­Ø³Ø¨ Ø§Ù„Ø­Ù…Ù„.",
+      "suggest.docker.mac": "Docker Desktop (macOS): Ø§Ø¶Ø¨Ø· Ø­Ø¯ÙˆØ¯ CPU/RAM ÙˆÙ…Ø´Ø§Ø±ÙƒØ© Ø§Ù„Ù…Ù„ÙØ§Øª (VirtioFS Ø¥Ù† ØªÙˆÙØ±).",
+      "checklist.osDrivers": "Ø­Ø¯Ù‘Ø« Ù†Ø¸Ø§Ù… Ø§Ù„ØªØ´ØºÙŠÙ„ ÙˆØ§Ù„ØªØ¹Ø±ÙŠÙØ§Øª (GPU, chipset, Wiâ€‘Fi/LAN) Ø¥Ù„Ù‰ Ø£Ø­Ø¯Ø« Ø§Ù„Ø¥ØµØ¯Ø§Ø±Ø§Øª Ø§Ù„Ù…Ø³ØªÙ‚Ø±Ø©.",
+      "checklist.powerPlan": "Ø§Ø³ØªØ®Ø¯Ù… Ø®Ø·Ø© Ø·Ø§Ù‚Ø© Ø¹Ø§Ù„ÙŠØ© Ø§Ù„Ø£Ø¯Ø§Ø¡ Ø£Ø«Ù†Ø§Ø¡ Ø§Ù„Ø¨Ø±Ù…Ø¬Ø© Ø£Ùˆ Ø§Ù„Ø¨Ù†Ø§Ø¡.",
+      "checklist.startupApps": "Ø¹Ø·Ù‘Ù„ ØªØ·Ø¨ÙŠÙ‚Ø§Øª Ø¨Ø¯Ø¡ Ø§Ù„ØªØ´ØºÙŠÙ„ ÙˆØ§Ù„Ø®Ø¯Ù…Ø§Øª Ø§Ù„Ø®Ù„ÙÙŠØ© ØºÙŠØ± Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…Ø©.",
+      "checklist.diskSpace": "Ø§Ø­ØªÙØ¸ Ø¨Ù…Ø§ Ù„Ø§ ÙŠÙ‚Ù„ Ø¹Ù† 20% Ù…Ø³Ø§Ø­Ø© Ø­Ø±Ø©Ø› Ù†Ø¸Ù‘Ù Ø§Ù„Ù‚Ø±Øµ ÙˆØ£Ø²Ù„ Ø§Ù„Ù…Ù„ÙØ§Øª Ø§Ù„Ù…Ø¤Ù‚ØªØ© Ø§Ù„ÙƒØ¨ÙŠØ±Ø©.",
+      "checklist.ssd": "ÙØ¶Ù‘Ù„ SSD Ù„Ù„Ù…Ø´Ø§Ø±ÙŠØ¹Ø› ØªØ¬Ù†Ø¨ Ø§Ù„Ø¨Ù†Ø§Ø¡ Ø§Ù„Ø«Ù‚ÙŠÙ„ Ø¹Ù„Ù‰ Ø£Ù‚Ø±Ø§Øµ Ø®Ø§Ø±Ø¬ÙŠØ© Ø¨Ø·ÙŠØ¦Ø©.",
+      "checklist.visualEffects": "Ù‚Ù„Ù‘Ù„ Ø§Ù„Ù…Ø¤Ø«Ø±Ø§Øª Ø§Ù„Ø¨ØµØ±ÙŠØ©/Ø§Ù„Ø±Ø³ÙˆÙ… Ø§Ù„Ù…ØªØ­Ø±ÙƒØ© Ù„ÙˆØ§Ø¬Ù‡Ø© Ø£Ø³Ø±Ø¹.",
+      "checklist.antivirus": "Ø§Ø³ØªØ¨Ø¹Ø¯ Ù…Ø¬Ù„Ø¯Ø§Øª Ø§Ù„Ù…Ø´Ø±ÙˆØ¹ (node_modules, build, dist) Ù…Ù† ÙØ­Øµ Ù…Ø¶Ø§Ø¯ Ø§Ù„ÙÙŠØ±ÙˆØ³Ø§Øª Ø§Ù„ÙÙˆØ±ÙŠ.",
+      "checklist.wifi": "Ø§Ø³ØªØ®Ø¯Ù… Ethernet Ø£Ùˆ Wiâ€‘Fi 5GHz Ù‚ÙˆÙŠØ› Ø­Ø¯Ù‘Ø« Firmware Ø§Ù„Ø±Ø§ÙˆØªØ± ÙˆØ£Ø¹Ø¯ ØªØ´ØºÙŠÙ„Ù‡ Ø¯ÙˆØ±ÙŠØ§Ù‹.",
+      "checklist.dns": "Ø§Ø¶Ø¨Ø· DNS Ø³Ø±ÙŠØ¹Ø§Ù‹ ÙˆØªØ­Ù‚Ù‚ Ù…Ù† Ø²Ù…Ù† Ø§Ø³ØªØ¬Ø§Ø¨Ø© Ù…Ù†Ø®ÙØ¶ Ù„ØªÙ†Ø²ÙŠÙ„ Ø§Ù„Ø­Ø²Ù….",
+      "checklist.browser": "Ù‚Ù„Ù‘Ù„ ØªØ¨ÙˆÙŠØ¨Ø§Øª Ø§Ù„Ù…ØªØµÙØ­ ÙˆØ£ØºÙ„Ù‚ Ø§Ù„ØªØ·Ø¨ÙŠÙ‚Ø§Øª Ø§Ù„Ø«Ù‚ÙŠÙ„Ø© Ø£Ø«Ù†Ø§Ø¡ Ø§Ù„Ø¨Ù†Ø§Ø¡.",
+      "checklist.hwAccel": "ÙØ¹Ù‘Ù„ ØªØ³Ø±ÙŠØ¹ Ø§Ù„Ø¹ØªØ§Ø¯ Ø­ÙŠØ«Ù…Ø§ ÙƒØ§Ù† Ù…Ø¯Ø¹ÙˆÙ…Ø§Ù‹ (Ø§Ù„Ù…ØªØµÙØ­/IDE).",
+      "checklist.cliTools": "Ø­Ø¯Ù‘Ø« Ø£Ø¯ÙˆØ§Øª CLI Ø¨Ø§Ø³ØªÙ…Ø±Ø§Ø± (Node.js, npm, Git, Docker, Java).",
+      "checklist.reboot": "Ø£Ø¹Ø¯ Ø§Ù„ØªØ´ØºÙŠÙ„ Ø¨Ø¹Ø¯ Ø§Ù„ØªØ­Ø¯ÙŠØ«Ø§Øª Ø§Ù„ÙƒØ¨ÙŠØ±Ø© Ù„ØªÙ†Ø¸ÙŠÙ Ø§Ù„Ø¹Ù…Ù„ÙŠØ§Øª."
+    }
+  },
+  id: {
+    dir: "ltr",
+    strings: {
+      "app.title": "Developer Diagnostics Kit",
+      "app.badge": "Windows + macOS",
+      "platform.windows": "Windows",
+      "platform.macos": "macOS",
+      "language.title": "Pilih bahasa",
+      "language.subtitle": "Kami dapat mendeteksi otomatis berdasarkan wilayah Anda.",
+      "language.auto": "Deteksi bahasa otomatis",
+      "language.manual": "Atau pilih secara manual",
+      "language.continue": "Lanjut",
+      "language.status.idle": "Menunggu.",
+      "language.status.detecting": "Mendeteksi bahasa...",
+      "language.status.detected": "Terdeteksi: {language}.",
+      "language.status.failed": "Gagal mendeteksi bahasa.",
+      "language.label.enGB": "Inggris (UK)",
+      "language.label.nl": "Belanda",
+      "language.label.hi": "हिन्दी",
+      "language.label.ar": "العربية",
+      "language.label.pl": "Polandia",
+      "language.label.uk": "Ukraina",
+      "language.label.fr": "Prancis",
+      "language.label.pt": "Portugis",
+      "language.label.es": "Spanyol",
+      "language.label.it": "Italia",
+      "language.label.id": "Bahasa Indonesia",
+      "setup.title": "Penyiapan",
+      "setup.note": "Menginstal dependensi dev proyek dan menjalankan aplikasi dev. Hanya diperlukan jika menjalankan dari source.",
+      "setup.list.install": "Akan menjalankan: npm install",
+      "setup.list.start": "Akan menjalankan: npm start",
+      "setup.install": "Instal dependensi",
+      "setup.start": "Mulai aplikasi",
+      "setup.status.waiting": "Menunggu.",
+      "setup.status.installing": "Menginstal...",
+      "setup.status.starting": "Memulai...",
+      "setup.status.done": "Selesai.",
+      "mode.title": "Mode uji",
+      "mode.brief": "Singkat",
+      "mode.extensive": "Lengkap",
+      "extras.title": "Ekstra",
+      "extras.software": "Software/IDE",
+      "extras.dependencies": "Alat & bahasa",
+      "extras.optimization": "Sertakan pemeriksaan optimasi",
+      "actions.run": "Jalankan diagnostik",
+      "status.ready": "Siap.",
+      "status.running": "Menjalankan diagnostik {mode}...",
+      "status.complete": "Diagnostik {mode} selesai.",
+      "status.failed": "Diagnostik gagal.",
+      "status.wrapping": "Menyelesaikan...",
+      "status.exporting": "Menyimpan {format}...",
+      "status.export.complete": "Ekspor selesai.",
+      "status.export.canceled": "Ekspor dibatalkan.",
+      "status.export.failed": "Ekspor gagal.",
+      "progress.title": "Menjalankan diagnostik...",
+      "progress.preparing": "Menyiapkan pemeriksaan.",
+      "progress.running": "Menjalankan pemeriksaan {mode}...",
+      "results.button": "Hasil",
+      "results.title": "Hasil",
+      "results.placeholder": "Jalankan diagnostik untuk melihat hasil.",
+      "export.title": "Ekspor hasil",
+      "export.button": "Ekspor hasil",
+      "export.previous": "Sebelumnya",
+      "results.status.ready": "Siap.",
+      "results.status.running": "Sedang berjalan...",
+      "results.status.complete": "Selesai.",
+      "results.status.failed": "Gagal.",
+      "suggestions.title": "Saran optimasi",
+      "suggestions.placeholder": "Jalankan diagnostik untuk melihat saran.",
+      "actions.close": "Tutup aplikasi",
+      "modal.title": "Ekspor hasil",
+      "modal.subtitle": "Pilih format:",
+      "modal.cancel": "Batal",
+      "results.brief.title": "Ringkasan singkat",
+      "results.extensive.title": "Diagnostik lengkap",
+      "section.os": "Sistem operasi",
+      "section.cpu": "CPU (Prosesor)",
+      "section.ram": "Modul RAM",
+      "section.gpu": "GPU (Kartu grafis)",
+      "section.internet": "Internet",
+      "section.network": "Jaringan",
+      "section.system": "Pengaturan sistem",
+      "section.process": "Proses",
+      "section.app": "Aplikasi",
+      "section.work": "Kesiapan kerja",
+      "section.cli": "Alat CLI",
+      "section.software": "Software/IDE terpasang",
+      "section.dependencies": "Alat & bahasa",
+      "section.suggestions": "Saran",
+      "label.version": "versi",
+      "label.release": "release",
+      "label.arch": "arsitektur",
+      "label.hostname": "hostname",
+      "label.ip": "ip",
+      "label.updateStatus": "status pembaruan",
+      "label.vendor": "vendor",
+      "label.model": "model",
+      "label.cores": "core",
+      "label.installed": "terpasang",
+      "label.totalSpeed": "kecepatan total",
+      "label.voltage": "tegangan",
+      "label.loadAvg": "rata-rata beban",
+      "label.total": "total",
+      "label.used": "terpakai",
+      "label.free": "bebas",
+      "label.intellijCap": "batas IntelliJ",
+      "label.altIdeCaps": "Batas IDE alternatif",
+      "label.driver": "driver",
+      "label.speed": "kecepatan",
+      "label.test": "tes",
+      "label.download": "unduh",
+      "label.upload": "unggah",
+      "label.ping": "ping",
+      "label.status": "status",
+      "label.gateway": "gateway",
+      "label.routerFirmware": "firmware router",
+      "label.wifi": "wifi",
+      "label.signal": "sinyal",
+      "label.lan": "lan",
+      "label.power": "daya",
+      "label.name": "nama",
+      "label.electron": "electron",
+      "label.node": "node",
+      "label.chrome": "chrome",
+      "label.javaHome": "java home",
+      "label.platform": "platform",
+      "label.missingEssentials": "esensial yang hilang",
+      "brief.os": "OS",
+      "brief.arch": "arch",
+      "brief.cpu": "CPU",
+      "brief.ram": "RAM",
+      "brief.gpu": "GPU",
+      "brief.internet": "Internet",
+      "brief.cli": "Alat CLI",
+      "brief.software": "Software/IDE",
+      "brief.dependencies": "Alat & bahasa",
+      "brief.missing": "Esensial yang hilang",
+      "note.skipped": "dilewati (jalankan pemeriksaan lengkap untuk tes kecepatan)",
+      "note.optimization.disabled": "Pemeriksaan optimasi dinonaktifkan.",
+      "note.noDiagnostics": "Tidak ada diagnostik.",
+      "note.noIssues": "Tidak ada masalah langsung. Sistem terlihat sehat.",
+      "note.potential": "Potensi peningkatan (perkiraan): {min}-{max}%.",
+      "note.missing.none": "tidak ada",
+      "note.na": "n/a",
+      "suggest.checklist.brief": "Checklist mulai kerja: pastikan alat penting terpasang dan build berjalan.",
+      "suggest.checklist.extensive": "Checklist performa maksimal: fokus pada langkah yang meningkatkan kecepatan dan efisiensi.",
+      "suggest.memory.low": "Memori bebas rendah: tutup aplikasi yang tidak digunakan atau restart untuk membebaskan RAM.",
+      "suggest.memory.veryHigh": "Penggunaan RAM >= 90%: tutup aplikasi berat, jeda build, atau tambah RAM.",
+      "suggest.memory.high": "Penggunaan RAM >= 80%: pertimbangkan menutup aplikasi atau menambah RAM jika sering terjadi.",
+      "suggest.memory.reserve": "Pertahankan 20% RAM bebas untuk cache dan tugas OS; 10% adalah minimum agar tidak melambat.",
+      "suggest.cpu.high": "Beban CPU tinggi: periksa Task Manager untuk proses berat.",
+      "suggest.internet.failed": "Uji internet gagal: periksa koneksi atau firewall.",
+      "suggest.internet.latency": "Latensi internet tinggi: coba jaringan lain atau restart router.",
+      "suggest.os.updates": "Pembaruan macOS tersedia: instal pembaruan terbaru.",
+      "suggest.gpu.full": "Jalankan diagnostik penuh untuk memasukkan GPU dan detail proses.",
+      "suggest.ide.cap": "Batas IDE JetBrains terdeteksi: naikkan heap jika performa lambat.",
+      "suggest.wifi.weak": "Sinyal Wi‑Fi lemah (<60%): mendekat ke router atau gunakan Ethernet.",
+      "suggest.wifi.weakRssi": "Sinyal Wi‑Fi lemah (RSSI rendah): mendekat ke router atau gunakan Ethernet.",
+      "suggest.power.plan": "Rencana daya tidak di performa tinggi: gunakan Best/High Performance saat coding atau build.",
+      "suggest.vscode.extensions": "VS Code: nonaktifkan ekstensi yang tidak dipakai dan kecualikan folder build/output dari pemantauan dan pencarian.",
+      "suggest.jetbrains.tune": "JetBrains IDE: nonaktifkan plugin yang tidak dipakai, kecualikan output build dari pengindeksan, dan naikkan heap bila perlu.",
+      "suggest.vs.parallel": "Visual Studio: aktifkan build paralel dan unload proyek yang tidak dipakai untuk mengurangi waktu muat.",
+      "suggest.xcode.derived": "Xcode: bersihkan DerivedData ketika indexing atau build melambat.",
+      "suggest.android.accel": "Android Studio: aktifkan akselerasi hardware emulator dan simpan cache Gradle di storage cepat.",
+      "suggest.node.lts": "Node.js: gunakan LTS terbaru dan simpan dependensi di SSD.",
+      "suggest.ts.incremental": "TypeScript: aktifkan build incremental atau project references untuk codebase besar.",
+      "suggest.python.venv": "Python: gunakan virtual environment agar instalasi terisolasi dan cepat.",
+      "suggest.java.lts": "Java: gunakan JDK LTS terbaru dan aktifkan cache build (Gradle/Maven).",
+      "suggest.docker.windows": "Docker Desktop (Windows): gunakan backend WSL2 dan sesuaikan batas CPU/RAM.",
+      "suggest.docker.mac": "Docker Desktop (macOS): sesuaikan batas CPU/RAM dan file sharing (VirtioFS jika tersedia).",
+      "checklist.osDrivers": "Perbarui OS dan driver (GPU, chipset, Wi‑Fi/LAN) ke versi stabil terbaru.",
+      "checklist.powerPlan": "Gunakan rencana daya High/Best Performance saat coding atau build.",
+      "checklist.startupApps": "Nonaktifkan aplikasi startup dan layanan latar belakang yang tidak digunakan.",
+      "checklist.diskSpace": "Sediakan minimal 20% ruang kosong; lakukan disk cleanup dan hapus file sementara besar.",
+      "checklist.ssd": "Gunakan SSD untuk proyek; hindari build berat di drive eksternal lambat.",
+      "checklist.visualEffects": "Kurangi efek visual/animasi untuk UI lebih responsif.",
+      "checklist.antivirus": "Kecualikan folder proyek (node_modules, build, dist) dari pemindaian antivirus real‑time.",
+      "checklist.wifi": "Gunakan Ethernet atau Wi‑Fi 5GHz yang kuat; perbarui firmware router dan reboot berkala.",
+      "checklist.dns": "Atur DNS cepat dan cek latensi rendah untuk unduhan paket.",
+      "checklist.browser": "Batasi tab browser dan tutup aplikasi berat saat build.",
+      "checklist.hwAccel": "Aktifkan akselerasi hardware jika didukung (browser/IDE).",
+      "checklist.cliTools": "Perbarui alat CLI (Node.js, npm, Git, Docker, Java).",
+      "checklist.reboot": "Reboot setelah update besar untuk membersihkan proses."
+    }
+  }
+};
+
+let currentLang = DEFAULT_LANG;
+
+function t(key, vars = {}) {
+  const pack = LANGUAGES[currentLang] || LANGUAGES[DEFAULT_LANG];
+  const fallback = LANGUAGES[DEFAULT_LANG]?.strings || {};
+  const template = (pack?.strings && pack.strings[key]) || fallback[key] || key;
+  return template.replace(/\{(\w+)\}/g, (_, token) => {
+    const value = vars[token];
+    return value === undefined || value === null ? "" : String(value);
+  });
+}
+
+function applyTranslations() {
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const key = el.getAttribute("data-i18n");
+    if (!key) return;
+    el.textContent = t(key);
+  });
+
+  if (statusEl) statusEl.textContent = t("status.ready");
+  if (progressText) progressText.textContent = t("progress.preparing");
+  if (resultsStatus) resultsStatus.textContent = t("results.status.ready");
+  if (setupStatus) setupStatus.textContent = t("setup.status.waiting");
+  if (languageStatus) languageStatus.textContent = t("language.status.idle");
+  if (resultsEl && !lastResults) resultsEl.textContent = t("results.placeholder");
+  if (suggestionsList && !lastResults) {
+    suggestionsList.innerHTML = `<li>${t("suggestions.placeholder")}</li>`;
+  }
+
+  const platform = window.diagnostics?.platform === "darwin" ? "platform.macos" : "platform.windows";
+  if (platformBadge) platformBadge.textContent = t(platform);
+}
+
+function setLanguage(code, persist = true) {
+  const next = LANGUAGES[code] ? code : DEFAULT_LANG;
+  currentLang = next;
+  const dir = LANGUAGES[next]?.dir || "ltr";
+  document.documentElement.setAttribute("lang", next);
+  document.documentElement.setAttribute("dir", dir);
+  document.body.classList.toggle("rtl", dir === "rtl");
+  if (persist) {
+    localStorage.setItem(LANG_STORAGE_KEY, next);
+  }
+  applyTranslations();
+}
+
+function mapCountryToLanguage(countryCode) {
+  if (!countryCode) return null;
+  const code = String(countryCode).toUpperCase();
+  if (["NL", "BE"].includes(code)) return "nl";
+  if (["GB", "IE"].includes(code)) return "en-GB";
+  if (["IN"].includes(code)) return "hi";
+  if (["AE", "SA", "EG", "JO", "MA", "DZ", "TN", "QA", "KW", "BH", "OM"].includes(code)) return "ar";
+  if (["PL"].includes(code)) return "pl";
+  if (["UA"].includes(code)) return "uk";
+  if (["FR", "BE", "CH"].includes(code)) return "fr";
+  if (["PT", "BR"].includes(code)) return "pt";
+  if (["ES"].includes(code)) return "es";
+  if (["IT"].includes(code)) return "it";
+  if (["ID"].includes(code)) return "id";
+  return null;
+}
+
+async function detectLanguage() {
+  if (!languageStatus) return;
+  languageStatus.textContent = t("language.status.detecting");
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    if (!res.ok) throw new Error("geo lookup failed");
+    const data = await res.json();
+    const lang = mapCountryToLanguage(data?.country_code);
+    if (!lang) {
+      languageStatus.textContent = t("language.status.failed");
+      return;
+    }
+    setLanguage(lang, true);
+    const input = document.querySelector(`input[name="language"][value="${lang}"]`);
+    if (input) input.checked = true;
+    const labelKey = LANGUAGE_LABEL_KEYS[lang];
+    languageStatus.textContent = t("language.status.detected", {
+      language: labelKey ? t(labelKey) : lang
+    });
+  } catch {
+    languageStatus.textContent = t("language.status.failed");
+  }
+}
+
+function initLanguage() {
+  const stored = localStorage.getItem(LANG_STORAGE_KEY);
+  if (stored) {
+    setLanguage(stored, false);
+    showScreen(screenStart);
+    return;
+  }
+  setLanguage(DEFAULT_LANG, false);
+  showScreen(screenLanguage);
+  detectLanguage();
+}
 
 const appIcon = document.querySelector(".app-icon");
 if (appIcon && window.diagnostics && window.diagnostics.platform) {
   const iconFile = window.diagnostics.platform === "darwin" ? "icon-mac.png" : "icon-win.png";
   appIcon.src = `assets/${iconFile}`;
-}
-
-if (platformBadge && window.diagnostics?.platform) {
-  platformBadge.textContent = window.diagnostics.platform === "darwin" ? "macOS" : "Windows";
 }
 
 if (window.diagnostics?.platform !== "win32" && setupCard) {
@@ -50,22 +2207,24 @@ function getSelectedCheckbox(name, fallback = true) {
 }
 
 function showScreen(screen) {
-  [screenStart, screenProgress, screenResults].forEach((node) => {
+  [screenLanguage, screenStart, screenProgress, screenResults].forEach((node) => {
     if (!node) return;
     node.classList.toggle("hidden", node !== screen);
   });
 }
 
-function formatForDisplay(obj) {
-  if (!obj) return "No diagnostics available.";
+// Convert raw diagnostics into readable text.
+function formatForDisplay(obj, approach = "extensive") {
+  if (!obj) return t("note.noDiagnostics");
+  const isBrief = approach === "brief";
   const formatValue = (value) => {
-    if (value === null || value === undefined || value === "") return "n/a";
-    if (Array.isArray(value)) return value.length ? value.join(", ") : "n/a";
+    if (value === null || value === undefined || value === "") return t("note.na");
+    if (Array.isArray(value)) return value.length ? value.join(", ") : t("note.na");
     return String(value);
   };
   const toMBps = (mbps) => {
     const num = Number(mbps);
-    if (!Number.isFinite(num)) return "n/a";
+    if (!Number.isFinite(num)) return t("note.na");
     return (num / 8).toFixed(2);
   };
 
@@ -78,69 +2237,158 @@ function formatForDisplay(obj) {
     .filter(([, info]) => info?.ok)
     .map(([name, info]) => {
       const version = info?.version ? ` (${info.version})` : "";
-      return `- ${name}: ok${version}`;
+      return `- ${name}: ${t("label.ok")}${version}`;
     });
   const cliMissing = cliEntries.filter(([, info]) => info?.ok === false).map(([name]) => name);
-  if (cliMissing.includes("npm") || cliMissing.includes("node")) {
-    cliLines.push("- note: install Node.js (includes npm) to enable CLI builds.");
-  }
 
   const softwareList = Array.isArray(obj?.software) ? obj.software : [];
-  const softwareLines = softwareList.map((item) => `- ${item.name}: ${item.present ? "ok" : "missing"}`);
+  const softwarePresentItems = softwareList.filter((item) => item.present);
+  const softwareLines = softwarePresentItems.map((item) => `- ${item.name}: ${t("label.ok")}`);
+  const softwarePresent = softwarePresentItems.length;
 
   const dependencyList = Array.isArray(obj?.dependencies) ? obj.dependencies : [];
-  const dependencyLines = dependencyList.map((item) => {
+  const dependencyPresentItems = dependencyList.filter((item) => item.present);
+  const dependencyMissing = dependencyList.filter((item) => !item.present).map((item) => item.name);
+  const dependencyLines = dependencyPresentItems.map((item) => {
     const version = item.version ? ` (${item.version})` : "";
-    return `- ${item.name}: ${item.present ? "ok" : "missing"}${version}`;
+    return `- ${item.name}: ${t("label.ok")}${version}`;
   });
+  const dependencyPresent = dependencyPresentItems.length;
+
+  if (isBrief) {
+    const cliOk = cliEntries.filter(([, info]) => info?.ok).length;
+    const missingEssentials = [].concat(cliMissing, dependencyMissing);
+    const internetSummary = obj?.internet?.error === "Skipped in brief mode"
+      ? t("note.skipped")
+      : `${toMBps(obj?.internet?.downloadMbps)} MB/s down, ${toMBps(obj?.internet?.uploadMbps)} MB/s up, ${formatValue(obj?.internet?.pingMs)} ms ping`;
+    const briefLines = [
+      t("results.brief.title"),
+      `- ${t("brief.os")}: ${formatValue(obj?.os?.version)} (${formatValue(obj?.os?.release)})`,
+      `- ${t("brief.arch")}: ${formatValue(obj?.os?.arch)}`,
+      `- ${t("brief.cpu")}: ${formatValue(obj?.cpu?.model)} (${formatValue(obj?.cpu?.cores)} ${t("label.cores")})`,
+      `- ${t("brief.ram")}: ${formatValue(obj?.memory?.total)} ${t("label.total")}, ${formatValue(obj?.memory?.free)} ${t("label.free")}`,
+      `- ${t("brief.gpu")}: ${formatValue(obj?.gpu?.vendor)} ${formatValue(obj?.gpu?.chip)}`,
+      `- ${t("brief.internet")}: ${internetSummary}`,
+      cliOk ? `- ${t("brief.cli")}: ${cliOk} ${t("label.installed") || "installed"}` : `- ${t("brief.cli")}: ${t("note.na")}`,
+      softwarePresent ? `- ${t("brief.software")}: ${softwarePresent} ${t("label.installed") || "installed"}` : `- ${t("brief.software")}: ${t("note.na")}`,
+      dependencyPresent ? `- ${t("brief.dependencies")}: ${dependencyPresent} ${t("label.installed") || "installed"}` : `- ${t("brief.dependencies")}: ${t("note.na")}`,
+      missingEssentials.length
+        ? `- ${t("brief.missing")}: ${missingEssentials.join(", ")}`
+        : `- ${t("brief.missing")}: ${t("note.missing.none")}`
+    ];
+    return briefLines.join("\n");
+  }
 
   const lines = [
-    "OS",
-    `- version: ${formatValue(obj?.os?.version)}`,
-    `- release: ${formatValue(obj?.os?.release)}`,
-    `- arch: ${formatValue(obj?.os?.arch)}`,
-    `- hostname: ${formatValue(obj?.os?.hostname)}`,
-    `- ip: ${formatValue(obj?.os?.ip)}`,
+    t("results.extensive.title"),
     "",
-    "CPU (Processor)",
-    `- vendor: ${formatValue(obj?.cpu?.vendor)}`,
-    `- model: ${formatValue(obj?.cpu?.model)}`,
-    `- cores: ${formatValue(obj?.cpu?.cores)}`,
-    `- total speed: ${formatValue(obj?.cpu?.totalSpeedMHz)} MHz (${formatValue(obj?.cpu?.totalSpeedGHz)} GHz)`,
-    `- voltage: ${formatValue(obj?.cpu?.voltage)}`,
+    t("section.os"),
+    `- ${t("label.version")}: ${formatValue(obj?.os?.version)}`,
+    `- ${t("label.release")}: ${formatValue(obj?.os?.release)}`,
+    `- ${t("label.arch")}: ${formatValue(obj?.os?.arch)}`,
+    `- ${t("label.hostname")}: ${formatValue(obj?.os?.hostname)}`,
+    `- ${t("label.ip")}: ${formatValue(obj?.os?.ip)}`,
+    `- ${t("label.updateStatus")}: ${formatValue(obj?.os?.updateStatus)}`,
     "",
-    "RAM Modules",
-    `- vendor: ${formatValue(obj?.memory?.moduleVendors)}`,
-    `- total: ${formatValue(obj?.memory?.total)}`,
-    `- used: ${formatValue(obj?.memory?.used)}`,
-    `- free: ${formatValue(obj?.memory?.free)}`,
-    `- IntelliJ cap: ${formatValue(obj?.memory?.intellijCapMb)} MB`,
-    `- Alt IDE caps: ${ideCaps.length ? ideCaps.join("; ") : "n/a"}`,
+    t("section.cpu"),
+    `- ${t("label.vendor")}: ${formatValue(obj?.cpu?.vendor)}`,
+    `- ${t("label.model")}: ${formatValue(obj?.cpu?.model)}`,
+    `- ${t("label.cores")}: ${formatValue(obj?.cpu?.cores)}`,
+    `- ${t("label.totalSpeed")}: ${formatValue(obj?.cpu?.totalSpeedMHz)} MHz (${formatValue(obj?.cpu?.totalSpeedGHz)} GHz)`,
+    `- ${t("label.voltage")}: ${formatValue(obj?.cpu?.voltage)}`,
+    `- ${t("label.loadAvg")}: ${formatValue(obj?.cpu?.loadAvg)}`,
     "",
-    "GPU (Videocard)",
-    `- vendor: ${formatValue(obj?.gpu?.vendor)}`,
-    `- chip: ${formatValue(obj?.gpu?.chip)}`,
-    `- cores: ${formatValue(obj?.gpu?.cores)}`,
-    `- speed: ${formatValue(obj?.gpu?.speedMHz)} MHz (${formatValue(obj?.gpu?.speedGHz)} GHz)`,
-    `- voltage: ${formatValue(obj?.gpu?.voltage)}`,
+    t("section.ram"),
+    `- ${t("label.vendor")}: ${formatValue(obj?.memory?.moduleVendors)}`,
+    `- ${t("label.total")}: ${formatValue(obj?.memory?.total)}`,
+    `- ${t("label.used")}: ${formatValue(obj?.memory?.used)}`,
+    `- ${t("label.free")}: ${formatValue(obj?.memory?.free)}`,
+    ...(Number.isFinite(obj?.memory?.intellijCapMb)
+      ? [`- ${t("label.intellijCap")}: ${formatValue(obj?.memory?.intellijCapMb)} MB`]
+      : []),
+    ...(ideCaps.length
+      ? [`- ${t("label.altIdeCaps")}: ${ideCaps.join("; ")}`]
+      : []),
     "",
-    "Internet",
-    `- test: ${formatValue(obj?.internet?.testUrl)}`,
-    `- download: ${toMBps(obj?.internet?.downloadMbps)} MB/s`,
-    `- upload: ${toMBps(obj?.internet?.uploadMbps)} MB/s`,
-    `- ping: ${formatValue(obj?.internet?.pingMs)} ms`,
-    `- status: ${formatValue(obj?.internet?.ok ? "ok" : obj?.internet?.error || "n/a")}`,
-    ...(cliLines.length ? ["", "CLI Tools", ...cliLines] : []),
-    ...(softwareLines.length ? ["", "Software/IDEs installed", ...softwareLines] : []),
-    ...(dependencyLines.length ? ["", "Tools & Languages", ...dependencyLines] : [])
+    t("section.gpu"),
+    `- ${t("label.vendor")}: ${formatValue(obj?.gpu?.vendor)}`,
+    `- ${t("label.model")}: ${formatValue(obj?.gpu?.chip)}`,
+    `- ${t("label.driver")}: ${formatValue(obj?.gpu?.driverVersion)}`,
+    `- ${t("label.cores")}: ${formatValue(obj?.gpu?.cores)}`,
+    `- ${t("label.speed")}: ${formatValue(obj?.gpu?.speedMHz)} MHz (${formatValue(obj?.gpu?.speedGHz)} GHz)`,
+    `- ${t("label.voltage")}: ${formatValue(obj?.gpu?.voltage)}`,
+    "",
+    t("section.internet"),
+    `- ${t("label.test")}: ${formatValue(obj?.internet?.testUrl)}`,
+    `- ${t("label.download")}: ${toMBps(obj?.internet?.downloadMbps)} MB/s`,
+    `- ${t("label.upload")}: ${toMBps(obj?.internet?.uploadMbps)} MB/s`,
+    `- ${t("label.ping")}: ${formatValue(obj?.internet?.pingMs)} ms`,
+    `- ${t("label.status")}: ${formatValue(obj?.internet?.ok ? "ok" : obj?.internet?.error || t("note.na"))}`,
+    ...(obj?.network
+      ? [
+          "",
+          t("section.network"),
+          `- ${t("label.gateway")}: ${formatValue(obj?.network?.router?.gateway)}`,
+          `- ${t("label.routerFirmware")}: ${formatValue(obj?.network?.router?.firmware)}`,
+          `- ${t("label.wifi")}: ${formatValue(obj?.network?.wifi?.ssid) || t("note.na")} (${t("label.signal") || "signal"} ${formatValue(obj?.network?.wifi?.signal)})`,
+          `- ${t("label.lan")}: ${formatValue(obj?.network?.lan?.status)} (${formatValue(obj?.network?.lan?.speed)})`
+        ]
+      : []),
+    ...(obj?.systemSettings
+      ? [
+          "",
+          t("section.system"),
+          `- ${t("label.power")}: ${formatValue(obj?.systemSettings?.powerPlan || obj?.systemSettings?.powerSummary)}`
+        ]
+      : []),
+    ...(obj?.process
+      ? ["", t("section.process"), `- ${t("label.node")}: ${formatValue(obj?.process?.nodeVersion)}`, `- ${t("label.platform") || "platform"}: ${formatValue(obj?.process?.platform)}`]
+      : []),
+    ...(obj?.app
+      ? [
+          "",
+          t("section.app"),
+          `- ${t("label.name")}: ${formatValue(obj?.app?.name)}`,
+          `- ${t("label.version")}: ${formatValue(obj?.app?.version)}`,
+          `- ${t("label.electron")}: ${formatValue(obj?.app?.electron)}`,
+          `- ${t("label.node")}: ${formatValue(obj?.app?.node)}`,
+          `- ${t("label.chrome")}: ${formatValue(obj?.app?.chrome)}`,
+          `- ${t("label.javaHome")}: ${formatValue(obj?.app?.javaHome)}`
+        ]
+      : []),
+    ...([].concat(cliMissing, dependencyMissing).length
+      ? ["", t("section.work"), `- ${t("label.missingEssentials")}: ${[].concat(cliMissing, dependencyMissing).join(", ")}`]
+      : []),
+    ...(cliLines.length ? ["", t("section.cli"), ...cliLines] : []),
+    ...(softwareLines.length ? ["", t("section.software"), ...softwareLines] : []),
+    ...(dependencyLines.length ? ["", t("section.dependencies"), ...dependencyLines] : [])
   ];
 
   return lines.join("\n");
 }
 
-function getSuggestions(diag) {
+// Build optimization suggestions based on diagnostics and selected mode.
+function getSuggestions(diag, approach = "extensive") {
   const suggestions = [];
   if (!diag) return suggestions;
+  const addSuggestion = (text) => {
+    if (!suggestions.includes(text)) suggestions.push(text);
+  };
+  if (approach === "brief") {
+    addSuggestion(t("suggest.checklist.brief"));
+  } else {
+    addSuggestion(t("suggest.checklist.extensive"));
+  }
+  const platform = diag?.os?.platform;
+  const installedSoftwareEntries = (diag?.software || []).filter((item) => item?.present);
+  const installedSoftware = installedSoftwareEntries.map((item) => String(item.name || "").toLowerCase());
+  const hasSoftware = (needle) => installedSoftware.some((name) => name.includes(needle));
+  const hasSoftwareExact = (name) =>
+    installedSoftwareEntries.some((item) => String(item.name || "") === name);
+  const installedDeps = (diag?.dependencies || [])
+    .filter((item) => item?.present)
+    .map((item) => String(item.name || "").toLowerCase());
+  const hasDependency = (needle) => installedDeps.some((name) => name.includes(needle));
 
   const totalMem = Number(diag?.memory?.total?.replace(/[^\d.]/g, "")); // parse total RAM (MB/GB string)
   const freeMem = Number(diag?.memory?.free?.replace(/[^\d.]/g, "")); // parse free RAM (MB/GB string)
@@ -148,116 +2396,215 @@ function getSuggestions(diag) {
     const freeRatio = freeMem / totalMem;
     const usedRatio = 1 - freeRatio;
     if (freeRatio < 0.2) {
-      suggestions.push("Low free memory: close unused apps or restart to free RAM.");
+      addSuggestion(t("suggest.memory.low"));
     }
     if (usedRatio >= 0.9) {
-      suggestions.push("RAM use >= 90%: close heavy apps, pause builds, or increase system RAM.");
+      addSuggestion(t("suggest.memory.veryHigh"));
     } else if (usedRatio >= 0.8) {
-      suggestions.push("RAM use >= 80%: consider closing apps or increasing RAM if this is common.");
+      addSuggestion(t("suggest.memory.high"));
     }
-    suggestions.push("Keep 20% free RAM for cache and OS tasks; 10% is the minimum to avoid slowdowns.");
+    addSuggestion(t("suggest.memory.reserve"));
   }
 
   const loadAvg = diag?.cpu?.loadAvg;
   const cores = Number(diag?.cpu?.cores);
   if (Array.isArray(loadAvg) && loadAvg.length > 0 && Number.isFinite(cores)) {
     if (loadAvg[0] > cores) {
-      suggestions.push("High CPU load: check Task Manager for heavy processes.");
+      addSuggestion(t("suggest.cpu.high"));
     }
   }
 
-  const latency = Number(diag?.internet?.latencyMs);
+  const latency = Number(diag?.internet?.pingMs);
   if (diag?.internet?.ok === false) {
-    suggestions.push("Internet check failed: verify your connection or firewall.");
+    addSuggestion(t("suggest.internet.failed"));
   } else if (Number.isFinite(latency) && latency > 200) {
-    suggestions.push("High internet latency: try switching networks or restarting the router.");
+    addSuggestion(t("suggest.internet.latency"));
   }
 
   if (diag?.os?.updateStatus === "updates_available") {
-    suggestions.push("macOS updates available: install the latest updates.");
+    addSuggestion(t("suggest.os.updates"));
   }
 
   if (!diag?.gpu) {
-    suggestions.push("Run full diagnostics to include GPU and process details.");
+    addSuggestion(t("suggest.gpu.full"));
   }
 
-  const missingTools = Object.entries(diag?.cli || {})
-    .filter(([, info]) => info?.ok === false)
-    .map(([name]) => name);
-  if (missingTools.length) {
-    suggestions.push(`Missing CLI tools: ${missingTools.join(", ")}.`);
-    if (missingTools.includes("npm") || missingTools.includes("node")) {
-      suggestions.push("Install Node.js (includes npm) to enable CLI builds.");
+  // Intentionally skip missing tool/dependency suggestions when not installed.
+
+  if (Number.isFinite(diag?.memory?.intellijCapMb) || (diag?.memory?.alternativeIdeCaps || []).length > 0) {
+    addSuggestion(t("suggest.ide.cap"));
+  }
+
+  const wifiSignal = diag?.network?.wifi?.signal;
+  if (wifiSignal) {
+    const signalText = String(wifiSignal);
+    const percentMatch = signalText.match(/(\d+)\s*%/);
+    if (percentMatch && Number(percentMatch[1]) < 60) {
+      addSuggestion(t("suggest.wifi.weak"));
+    }
+    const rssi = Number(signalText.replace(/[^\d.-]/g, ""));
+    if (Number.isFinite(rssi) && rssi < 0 && rssi <= -70) {
+      addSuggestion(t("suggest.wifi.weakRssi"));
     }
   }
 
-  if (Number.isFinite(diag?.memory?.intellijCapMb) || (diag?.memory?.alternativeIdeCaps || []).length > 0) {
-    suggestions.push("JetBrains IDE cap detected: increase IDE heap size if performance is slow.");
+  const powerPlan = String(diag?.systemSettings?.powerPlan || diag?.systemSettings?.powerSummary || "");
+  if (platform === "win32" && powerPlan && /balanced|power saver|power saving/i.test(powerPlan)) {
+    addSuggestion(t("suggest.power.plan"));
   }
 
-  if (suggestions.length === 0) {
-    suggestions.push("No immediate issues found. System looks healthy.");
+  if (hasSoftware("visual studio code")) {
+    addSuggestion(t("suggest.vscode.extensions"));
   }
 
-  return suggestions;
+  const hasJetBrainsIde =
+    hasSoftware("intellij") ||
+    hasSoftware("pycharm") ||
+    hasSoftware("webstorm") ||
+    hasSoftware("rider") ||
+    hasSoftware("clion") ||
+    hasSoftware("datagrip") ||
+    hasSoftware("android studio");
+  if (hasJetBrainsIde) {
+    addSuggestion(t("suggest.jetbrains.tune"));
+  }
+
+  if (hasSoftwareExact("Visual Studio")) {
+    addSuggestion(t("suggest.vs.parallel"));
+  }
+
+  if (hasSoftware("xcode")) {
+    addSuggestion(t("suggest.xcode.derived"));
+  }
+
+  if (hasSoftware("android studio")) {
+    addSuggestion(t("suggest.android.accel"));
+  }
+
+  if (hasDependency("javascript") || hasDependency("node")) {
+    addSuggestion(t("suggest.node.lts"));
+  }
+
+  if (hasDependency("typescript")) {
+    addSuggestion(t("suggest.ts.incremental"));
+  }
+
+  if (hasDependency("python")) {
+    addSuggestion(t("suggest.python.venv"));
+  }
+
+  if (hasDependency("java")) {
+    addSuggestion(t("suggest.java.lts"));
+  }
+
+  if (hasDependency("docker")) {
+    const dockerTip = platform === "win32"
+      ? t("suggest.docker.windows")
+      : t("suggest.docker.mac");
+    addSuggestion(dockerTip);
+  }
+
+  let finalSuggestions = suggestions;
+  if (approach === "brief") {
+    finalSuggestions = suggestions.slice(0, 4);
+  }
+
+  if (approach === "extensive") {
+    const extensiveChecklist = [
+      t("checklist.osDrivers"),
+      t("checklist.powerPlan"),
+      t("checklist.startupApps"),
+      t("checklist.diskSpace"),
+      t("checklist.ssd"),
+      t("checklist.visualEffects"),
+      t("checklist.antivirus"),
+      t("checklist.wifi"),
+      t("checklist.dns"),
+      t("checklist.browser"),
+      t("checklist.hwAccel"),
+      t("checklist.cliTools"),
+      t("checklist.reboot")
+    ];
+    finalSuggestions = finalSuggestions.concat(extensiveChecklist);
+  }
+
+  if (approach === "extensive" && finalSuggestions.length) {
+    const impact = Math.min(30, 5 + finalSuggestions.length * 3);
+    finalSuggestions = [
+      ...finalSuggestions,
+      t("note.potential", { min: impact, max: Math.min(40, impact + 10) })
+    ];
+  }
+
+  if (finalSuggestions.length === 0) {
+    finalSuggestions.push(t("note.noIssues"));
+  }
+
+  return finalSuggestions;
 }
 
 function formatForText(obj) {
-  const suggestions = lastOptions?.includeOptimization ? getSuggestions(obj) : ["Optimization checks disabled."];
+  const suggestions = lastOptions?.includeOptimization
+    ? getSuggestions(obj, lastOptions?.approach)
+    : [t("note.optimization.disabled")];
   return [
-    formatForDisplay(obj),
+    formatForDisplay(obj, lastOptions?.approach),
     "",
-    "Suggestions:",
+    `${t("section.suggestions")}:`,
     ...suggestions.map((item) => `- ${item}`)
   ].join("\n");
 }
 
 function formatForPdf(obj) {
-  const suggestions = lastOptions?.includeOptimization ? getSuggestions(obj) : ["Optimization checks disabled."];
+  const suggestions = lastOptions?.includeOptimization
+    ? getSuggestions(obj, lastOptions?.approach)
+    : [t("note.optimization.disabled")];
   return [
-    formatForDisplay(obj),
+    formatForDisplay(obj, lastOptions?.approach),
     "",
-    "Suggestions:",
+    `${t("section.suggestions")}:`,
     ...suggestions.map((item) => `- ${item}`)
   ].join("\n");
 }
 
+// Run diagnostics via the preload API and render results/suggestions.
 async function runDiagnostics() {
-  statusEl.textContent = "Running diagnostics...";
+  const approach = getSelectedValue("approach");
+  const approachLabel = approach === "brief" ? "brief" : "extensive";
+  statusEl.textContent = t("status.running", { mode: t(`mode.${approachLabel}`) });
   exportBtn.disabled = true;
-  if (resultsStatus) resultsStatus.textContent = "Running...";
+  if (resultsStatus) resultsStatus.textContent = t("results.status.running");
   showScreen(screenProgress);
-  if (progressText) progressText.textContent = "Running checks...";
+  if (progressText) progressText.textContent = t("progress.running", { mode: t(`mode.${approachLabel}`) });
   if (progressFill) progressFill.style.width = "30%";
-  const privacy = getSelectedValue("privacy");
-  const mode = getSelectedValue("mode");
+  const mode = approach === "brief" ? "quick" : "full";
   const includeSoftware = getSelectedCheckbox("extraSoftware", true);
   const includeDependencies = getSelectedCheckbox("extraDependencies", true);
   const includeOptimization = getSelectedCheckbox("extraOptimization", true);
 
   try {
     const data = await window.diagnostics.run({
-      privacy,
+      approach,
       mode,
       includeSoftware,
       includeDependencies,
       includeOptimization
     });
-    lastOptions = { includeSoftware, includeDependencies, includeOptimization };
+    lastOptions = { includeSoftware, includeDependencies, includeOptimization, approach };
     lastResults = data;
-    resultsEl.textContent = formatForDisplay(data);
-    const suggestions = includeOptimization ? getSuggestions(data) : ["Optimization checks disabled."];
+    resultsEl.textContent = formatForDisplay(data, approach);
+    const suggestions = includeOptimization ? getSuggestions(data, approach) : [t("note.optimization.disabled")];
     suggestionsList.innerHTML = suggestions.map((item) => `<li>${item}</li>`).join("");
     if (timestampEl) timestampEl.textContent = new Date().toLocaleString();
-    statusEl.textContent = "Diagnostics complete.";
-    if (resultsStatus) resultsStatus.textContent = "Complete.";
+    statusEl.textContent = t("status.complete", { mode: t(`mode.${approachLabel}`) });
+    if (resultsStatus) resultsStatus.textContent = t("results.status.complete");
     exportBtn.disabled = false;
-    if (progressText) progressText.textContent = "Wrapping up...";
+    if (progressText) progressText.textContent = t("status.wrapping");
     if (progressFill) progressFill.style.width = "100%";
     showScreen(screenResults);
   } catch (err) {
-    statusEl.textContent = "Diagnostics failed.";
-    if (resultsStatus) resultsStatus.textContent = "Failed.";
+    statusEl.textContent = t("status.failed");
+    if (resultsStatus) resultsStatus.textContent = t("results.status.failed");
     resultsEl.textContent = `Error: ${err.message || err}`;
     showScreen(screenResults);
   }
@@ -274,7 +2621,7 @@ function closeModal() {
 
 async function exportResults(format) {
   if (!lastResults) return;
-  statusEl.textContent = `Saving ${format.toUpperCase()}...`;
+  statusEl.textContent = t("status.exporting", { format: format.toUpperCase() });
   const contentText = formatForText(lastResults);
   const contentHtml = formatForPdf(lastResults)
     .replace(/</g, "&lt;")
@@ -286,10 +2633,30 @@ async function exportResults(format) {
       contentText,
       contentHtml
     });
-    statusEl.textContent = res.saved ? "Export complete." : "Export canceled.";
+    statusEl.textContent = res.saved ? t("status.export.complete") : t("status.export.canceled");
   } catch (err) {
-    statusEl.textContent = "Export failed.";
+    statusEl.textContent = t("status.export.failed");
   }
+}
+
+if (detectLanguageBtn) {
+  detectLanguageBtn.addEventListener("click", detectLanguage);
+}
+
+document.querySelectorAll('input[name="language"]').forEach((input) => {
+  input.addEventListener("change", (event) => {
+    const value = event.target.value;
+    if (value) setLanguage(value, false);
+  });
+});
+
+if (languageContinue) {
+  languageContinue.addEventListener("click", () => {
+    const selected = getSelectedValue("language") || DEFAULT_LANG;
+    setLanguage(selected, true);
+    showScreen(screenStart);
+    statusEl.textContent = t("status.ready");
+  });
 }
 
 runBtn.addEventListener("click", runDiagnostics);
@@ -310,17 +2677,24 @@ if (closeApp) {
   });
 }
 
+if (previousBtn) {
+  previousBtn.addEventListener("click", () => {
+    showScreen(screenStart);
+    statusEl.textContent = t("status.ready");
+  });
+}
+
 async function runSetup(action) {
   if (!window.diagnostics?.runSetup) return;
-  setupStatus.textContent = action === "install" ? "Installing..." : "Starting...";
+  setupStatus.textContent = action === "install" ? t("setup.status.installing") : t("setup.status.starting");
   try {
     const res = await window.diagnostics.runSetup(action);
-    setupStatus.textContent = res.ok ? "Done." : "Failed.";
+    setupStatus.textContent = res.ok ? t("setup.status.done") : t("results.status.failed");
     if (res.output) {
       resultsEl.textContent = res.output;
     }
   } catch (err) {
-    setupStatus.textContent = "Failed.";
+    setupStatus.textContent = t("results.status.failed");
     resultsEl.textContent = `Error: ${err.message || err}`;
   }
 }
@@ -332,4 +2706,6 @@ if (setupInstall) {
 if (setupStart) {
   setupStart.addEventListener("click", () => runSetup("start"));
 }
+
+initLanguage();
 

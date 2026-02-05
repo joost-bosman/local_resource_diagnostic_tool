@@ -20,6 +20,24 @@ body {
   color: var(--text);
 }
 
+body.rtl {
+  direction: rtl;
+}
+
+body.rtl .title-wrap {
+  flex-direction: row-reverse;
+}
+
+body.rtl .results-header,
+body.rtl .action-row {
+  flex-direction: row-reverse;
+}
+
+body.rtl .radio {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
 .app {
   padding: 6px 32px 20px;
   max-width: 1100px;
@@ -44,11 +62,40 @@ body {
   gap: 14px;
 }
 
+.icon-stack {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .app-icon {
   width: 48px;
   height: 48px;
   border-radius: 12px;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+.cloud-badge {
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(120deg, var(--accent), var(--accent-dark));
+  color: #0b0f14;
+  border: 2px solid #0f1115;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+}
+
+.cloud-badge svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
 }
 .app-header p {
   margin: 0;
@@ -91,6 +138,22 @@ body {
   box-shadow: 0 10px 24px var(--shadow);
 }
 
+.language-card {
+  max-width: 520px;
+  margin: 20px auto 0;
+}
+
+.language-actions {
+  margin-bottom: 12px;
+}
+
+.language-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 6px 12px;
+  margin-bottom: 16px;
+}
+
 .card h2 {
   margin: 0 0 12px;
   font-size: 18px;
@@ -112,6 +175,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.action-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 button {
@@ -258,6 +327,9 @@ button:disabled {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+  .language-card {
+    max-width: 100%;
   }
 }
 

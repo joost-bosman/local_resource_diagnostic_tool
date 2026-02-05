@@ -68,6 +68,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/**/Local Resource Diagnostic Tool Setup *.exe
-            dist/**/Local Resource Diagnostic Tool Setup *.exe.blockmap
+            dist/**/Developer Diagnostics Kit Setup *.exe
+            dist/**/Developer Diagnostics Kit Setup *.exe.blockmap
             dist/**/*.dmg

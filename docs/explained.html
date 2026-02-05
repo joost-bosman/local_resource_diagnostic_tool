@@ -1,0 +1,540 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Developer Diagnostics Kit - Explained</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Segoe UI", Arial, sans-serif;
+        line-height: 1.6;
+        color: #111;
+      }
+      body {
+        margin: 32px;
+        background: #f8f9fb;
+      }
+      .page {
+        max-width: 900px;
+        margin: 0 auto;
+        background: #fff;
+        padding: 28px 32px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      }
+      h1, h2, h3 {
+        margin: 0 0 12px;
+      }
+      h2 {
+        border-bottom: 1px solid #e4e7ee;
+        padding-bottom: 6px;
+        margin-top: 28px;
+      }
+      ul {
+        padding-left: 20px;
+      }
+      pre {
+        background: #f2f4f8;
+        padding: 12px;
+        border-radius: 10px;
+        overflow-x: auto;
+      }
+      .toc a {
+        color: #0b5ed7;
+        text-decoration: none;
+      }
+      .toc a:hover {
+        text-decoration: underline;
+      }
+      .section {
+        margin-top: 18px;
+      }
+      .rtl {
+        direction: rtl;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>Developer Diagnostics Kit - Explained</h1>
+      <h2>Table of Contents / Inhoudsopgave</h2>
+      <ul class="toc">
+        <li><a href="#en">English (UK)</a></li>
+        <li><a href="#nl">Nederlands</a></li>
+        <li><a href="#hi">हिन्दी</a></li>
+        <li><a href="#ar">العربية</a></li>
+        <li><a href="#pl">Polski</a></li>
+        <li><a href="#uk">Українська</a></li>
+        <li><a href="#fr">Français</a></li>
+        <li><a href="#pt">Português</a></li>
+        <li><a href="#es">Español</a></li>
+        <li><a href="#it">Italiano</a></li>
+        <li><a href="#id">Bahasa Indonesia</a></li>
+      </ul>
+
+      <section id="en" class="section">
+        <h2>English (UK)</h2>
+        <h3>Quick Start (Step-by-step)</h3>
+        <ol>
+          <li>Choose your language on the first screen.</li>
+          <li>Select <strong>Brief</strong> for quick readiness or <strong>Extensive</strong> for maximum performance checks.</li>
+          <li>(Optional) Enable <strong>Software/IDEs</strong> and <strong>Tools & Languages</strong> if you want those scans.</li>
+          <li>Click <strong>Run diagnostics</strong> and wait for results.</li>
+          <li>Review <strong>Optimization suggestions</strong> and export to TXT/PDF if needed.</li>
+        </ol>
+        <h3>Flow (visual)</h3>
+        <pre>[Choose Language] -> [Select Mode + Extras] -> [Run Diagnostics] -> [Results + Suggestions] -> [Export]</pre>
+        <h3>What the tool checks</h3>
+        <ul>
+          <li>OS, CPU, RAM, GPU, Internet speed/latency</li>
+          <li>Optional: installed IDEs, tools, and languages</li>
+          <li>Optional: network details and power plan (extensive mode)</li>
+        </ul>
+        <h3>Suggestions logic</h3>
+        <ul>
+          <li>Brief mode: focuses on readiness to start working.</li>
+          <li>Extensive mode: focuses on performance and efficiency gains.</li>
+        </ul>
+        <h3>Export</h3>
+        <ul>
+          <li>TXT and PDF exports include results + suggestions.</li>
+          <li>Filenames are timestamped for easy tracking.</li>
+        </ul>
+        <h3>Privacy & network</h3>
+        <ul>
+          <li>Diagnostics are local.</li>
+          <li>Language auto-detect uses IP to infer country; nothing is stored.</li>
+        </ul>
+        <h3>Download optimization tips (for better adoption)</h3>
+        <ul>
+          <li>Provide a clear changelog and screenshots.</li>
+          <li>Keep installers small and signed.</li>
+          <li>Add a short "first run" guide in the README.</li>
+          <li>Offer both portable and installer options when possible.</li>
+          <li>Publish hashes for integrity checks.</li>
+        </ul>
+      </section>
+
+      <section id="nl" class="section">
+        <h2>Nederlands</h2>
+        <h3>Snel starten (stap-voor-stap)</h3>
+        <ol>
+          <li>Kies je taal op het eerste scherm.</li>
+          <li>Kies <strong>Kort</strong> voor snelle gereedheid of <strong>Uitgebreid</strong> voor maximale prestatiechecks.</li>
+          <li>(Optioneel) Zet <strong>Software/IDEs</strong> en <strong>Tools & talen</strong> aan voor extra scans.</li>
+          <li>Klik <strong>Diagnose uitvoeren</strong> en wacht op de resultaten.</li>
+          <li>Bekijk <strong>Optimalisatiesuggesties</strong> en exporteer naar TXT/PDF indien nodig.</li>
+        </ol>
+        <h3>Flow (visueel)</h3>
+        <pre>[Taal kiezen] -> [Modus + Extra's] -> [Diagnose] -> [Resultaten + Suggesties] -> [Export]</pre>
+        <h3>Wat de tool controleert</h3>
+        <ul>
+          <li>OS, CPU, RAM, GPU, internetsnelheid/latency</li>
+          <li>Optioneel: geïnstalleerde IDE's, tools en talen</li>
+          <li>Optioneel: netwerkdetails en energieplan (uitgebreid)</li>
+        </ul>
+        <h3>Suggestielogica</h3>
+        <ul>
+          <li>Kort: gericht op snel kunnen starten.</li>
+          <li>Uitgebreid: gericht op maximale prestaties en efficiëntie.</li>
+        </ul>
+        <h3>Export</h3>
+        <ul>
+          <li>TXT en PDF bevatten resultaten + suggesties.</li>
+        </ul>
+        <h3>Privacy & netwerk</h3>
+        <ul>
+          <li>Diagnoses zijn lokaal.</li>
+          <li>Taal-detectie gebruikt IP voor regio; er wordt niets opgeslagen.</li>
+        </ul>
+        <h3>Download-optimalisatie tips</h3>
+        <ul>
+          <li>Duidelijke changelog en screenshots.</li>
+          <li>Houd installers klein en ondertekend.</li>
+          <li>Voeg een korte "first run"-gids toe.</li>
+          <li>Bied portable en installer-opties waar mogelijk.</li>
+          <li>Publiceer hashes voor integriteitscontrole.</li>
+        </ul>
+      </section>
+
+      <section id="hi" class="section">
+        <h2>हिन्दी</h2>
+        <h3>त्वरित शुरुआत (स्टेप-बाय-स्टेप)</h3>
+        <ol>
+          <li>पहले स्क्रीन पर भाषा चुनें।</li>
+          <li><strong>संक्षिप्त</strong> त्वरित उपयोग के लिए, <strong>विस्तृत</strong> अधिकतम प्रदर्शन के लिए चुनें।</li>
+          <li>(वैकल्पिक) <strong>Software/IDE</strong> और <strong>Tools & Languages</strong> सक्षम करें।</li>
+          <li><strong>डायग्नोस्टिक्स चलाएँ</strong> पर क्लिक करें।</li>
+          <li><strong>ऑप्टिमाइजेशन सुझाव</strong> देखें और जरूरत हो तो TXT/PDF एक्सपोर्ट करें।</li>
+        </ol>
+        <h3>फ्लो (विज़ुअल)</h3>
+        <pre>[भाषा] -> [मोड + एक्स्ट्रा] -> [डायग्नोस्टिक्स] -> [परिणाम + सुझाव] -> [एक्सपोर्ट]</pre>
+        <h3>टूल क्या जाँचता है</h3>
+        <ul>
+          <li>OS, CPU, RAM, GPU, इंटरनेट स्पीड/लेटेंसी</li>
+          <li>वैकल्पिक: IDEs, टूल्स, भाषाएँ</li>
+          <li>वैकल्पिक: नेटवर्क/पावर प्लान (विस्तृत)</li>
+        </ul>
+        <h3>सुझाव लॉजिक</h3>
+        <ul>
+          <li>संक्षिप्त: काम शुरू करने पर फोकस।</li>
+          <li>विस्तृत: अधिकतम प्रदर्शन/दक्षता पर फोकस।</li>
+        </ul>
+        <h3>एक्सपोर्ट</h3>
+        <ul>
+          <li>TXT/PDF में परिणाम + सुझाव शामिल होते हैं।</li>
+        </ul>
+        <h3>प्राइवेसी</h3>
+        <ul>
+          <li>डायग्नोस्टिक्स स्थानीय हैं।</li>
+          <li>भाषा पहचान IP से देश अनुमान करती है; डेटा स्टोर नहीं होता।</li>
+        </ul>
+        <h3>डाउनलोड ऑप्टिमाइज़ेशन टिप्स</h3>
+        <ul>
+          <li>स्पष्ट चेंजलॉग और स्क्रीनशॉट।</li>
+          <li>छोटे और साइन किए हुए इंस्टॉलर।</li>
+          <li>README में छोटा "पहली बार उपयोग" गाइड।</li>
+          <li>संभव हो तो portable + installer विकल्प।</li>
+          <li>integrity के लिए hash प्रकाशित करें।</li>
+        </ul>
+      </section>
+
+      <section id="ar" class="section rtl">
+        <h2>العربية</h2>
+        <h3>بدء سريع (خطوة بخطوة)</h3>
+        <ol>
+          <li>اختر اللغة في الشاشة الأولى.</li>
+          <li>اختر <strong>مختصر</strong> للجاهزية السريعة أو <strong>موسع</strong> لأقصى أداء.</li>
+          <li>(اختياري) فعّل <strong>البرامج/IDE</strong> و <strong>الأدوات واللغات</strong>.</li>
+          <li>اضغط <strong>تشغيل التشخيص</strong> وانتظر النتائج.</li>
+          <li>راجع <strong>اقتراحات التحسين</strong> وصدّر إلى TXT/PDF عند الحاجة.</li>
+        </ol>
+        <h3>التدفق (مرئي)</h3>
+        <pre>[اختيار اللغة] -> [الوضع + الإضافات] -> [التشخيص] -> [النتائج + الاقتراحات] -> [التصدير]</pre>
+        <h3>ما الذي يفحصه الأدات</h3>
+        <ul>
+          <li>OS, CPU, RAM, GPU, سرعة الإنترنت/الكمون</li>
+          <li>اختياري: IDEs والأدوات واللغات</li>
+          <li>اختياري: تفاصيل الشبكة وخطة الطاقة (موسع)</li>
+        </ul>
+        <h3>منطق الاقتراحات</h3>
+        <ul>
+          <li>مختصر: جاهزية البدء بالعمل.</li>
+          <li>موسع: أداء وكفاءة قصوى.</li>
+        </ul>
+        <h3>التصدير</h3>
+        <ul>
+          <li>TXT/PDF يتضمنان النتائج والاقتراحات.</li>
+        </ul>
+        <h3>الخصوصية</h3>
+        <ul>
+          <li>التشخيص محلي.</li>
+          <li>كشف اللغة يعتمد على IP لتحديد الدولة؛ لا يتم التخزين.</li>
+        </ul>
+        <h3>نصائح تحسين التحميل</h3>
+        <ul>
+          <li>سجل تغييرات واضح ولقطات شاشة.</li>
+          <li>مثبتات صغيرة وموقعة.</li>
+          <li>دليل "أول استخدام" قصير في README.</li>
+          <li>خيارات portable و installer إن أمكن.</li>
+          <li>نشر hashes للتحقق.</li>
+        </ul>
+      </section>
+
+      <section id="pl" class="section">
+        <h2>Polski</h2>
+        <h3>Szybki start (krok po kroku)</h3>
+        <ol>
+          <li>Wybierz jezyk na pierwszym ekranie.</li>
+          <li>Wybierz <strong>Krotki</strong> dla gotowosci, <strong>Rozszerzony</strong> dla maksymalnej wydajnosci.</li>
+          <li>(Opcjonalnie) Wlacz <strong>Software/IDEs</strong> i <strong>Narzedzia i jezyki</strong>.</li>
+          <li>Kliknij <strong>Uruchom diagnostyke</strong>.</li>
+          <li>Sprawdz <strong>Sugestie optymalizacji</strong> i eksportuj do TXT/PDF.</li>
+        </ol>
+        <h3>Przeplyw (wizualnie)</h3>
+        <pre>[Jezyk] -> [Tryb + Dodatki] -> [Diagnostyka] -> [Wyniki + Sugestie] -> [Eksport]</pre>
+        <h3>Co sprawdza narzedzie</h3>
+        <ul>
+          <li>OS, CPU, RAM, GPU, internet</li>
+          <li>Opcjonalnie: IDE, narzedzia, jezyki</li>
+          <li>Opcjonalnie: siec i plan zasilania (rozszerzony)</li>
+        </ul>
+        <h3>Logika sugestii</h3>
+        <ul>
+          <li>Krotki: gotowosc do pracy.</li>
+          <li>Rozszerzony: maksymalna wydajnosc i efektywnosc.</li>
+        </ul>
+        <h3>Eksport</h3>
+        <ul>
+          <li>TXT/PDF zawiera wyniki + sugestie.</li>
+        </ul>
+        <h3>Prywatnosc</h3>
+        <ul>
+          <li>Diagnostyka lokalna.</li>
+          <li>Auto-jezyk korzysta z IP; nic nie jest zapisywane.</li>
+        </ul>
+        <h3>Wskazowki pobierania</h3>
+        <ul>
+          <li>Jasny changelog i screeny.</li>
+          <li>Male, podpisane instalatory.</li>
+          <li>Krotki przewodnik "pierwsze uruchomienie".</li>
+          <li>Opcje portable + installer.</li>
+          <li>Publikuj hash'e.</li>
+        </ul>
+      </section>
+
+      <section id="uk" class="section">
+        <h2>Українська</h2>
+        <h3>Швидкий старт (крок за кроком)</h3>
+        <ol>
+          <li>Оберіть мову на першому екрані.</li>
+          <li>Оберіть <strong>Короткий</strong> для швидкої готовності або <strong>Розширений</strong> для максимуму.</li>
+          <li>(Опційно) Увімкніть <strong>ПЗ/IDE</strong> і <strong>Інструменти й мови</strong>.</li>
+          <li>Натисніть <strong>Запустити діагностику</strong>.</li>
+          <li>Перегляньте <strong>Пропозиції оптимізації</strong> і експортуйте TXT/PDF.</li>
+        </ol>
+        <h3>Потік (візуально)</h3>
+        <pre>[Мова] -> [Режим + Додатково] -> [Діагностика] -> [Результати + Пропозиції] -> [Експорт]</pre>
+        <h3>Що перевіряє інструмент</h3>
+        <ul>
+          <li>OS, CPU, RAM, GPU, інтернет</li>
+          <li>Опційно: IDE, інструменти, мови</li>
+          <li>Опційно: мережа та план живлення (розширений)</li>
+        </ul>
+        <h3>Логіка пропозицій</h3>
+        <ul>
+          <li>Короткий: готовність до старту.</li>
+          <li>Розширений: максимум продуктивності.</li>
+        </ul>
+        <h3>Експорт</h3>
+        <ul>
+          <li>TXT/PDF містять результати + пропозиції.</li>
+        </ul>
+        <h3>Приватність</h3>
+        <ul>
+          <li>Діагностика локальна.</li>
+          <li>Автовизначення мови використовує IP; нічого не зберігається.</li>
+        </ul>
+        <h3>Поради для завантаження</h3>
+        <ul>
+          <li>Чіткий changelog і скріншоти.</li>
+          <li>Невеликі, підписані інсталятори.</li>
+          <li>Короткий гайд "перший запуск".</li>
+          <li>Варіанти portable + installer.</li>
+          <li>Публікуйте хеші.</li>
+        </ul>
+      </section>
+
+      <section id="fr" class="section">
+        <h2>Français</h2>
+        <h3>Démarrage rapide (étape par étape)</h3>
+        <ol>
+          <li>Choisissez la langue au premier écran.</li>
+          <li><strong>Bref</strong> pour démarrer vite, <strong>Approfondi</strong> pour le maximum.</li>
+          <li>(Optionnel) Activez <strong>Logiciels/IDE</strong> et <strong>Outils & langages</strong>.</li>
+          <li>Cliquez <strong>Lancer le diagnostic</strong>.</li>
+          <li>Consultez <strong>Suggestions d'optimisation</strong> et exportez TXT/PDF.</li>
+        </ol>
+        <h3>Flux (visuel)</h3>
+        <pre>[Langue] -> [Mode + Extras] -> [Diagnostic] -> [Résultats + Suggestions] -> [Export]</pre>
+        <h3>Ce que l'outil vérifie</h3>
+        <ul>
+          <li>OS, CPU, RAM, GPU, internet</li>
+          <li>Optionnel: IDE, outils, langages</li>
+          <li>Optionnel: réseau et plan d'alimentation (approfondi)</li>
+        </ul>
+        <h3>Logique des suggestions</h3>
+        <ul>
+          <li>Bref: prêt à travailler.</li>
+          <li>Approfondi: performance et efficacité max.</li>
+        </ul>
+        <h3>Export</h3>
+        <ul>
+          <li>TXT/PDF incluent résultats + suggestions.</li>
+        </ul>
+        <h3>Confidentialité</h3>
+        <ul>
+          <li>Diagnostics locaux.</li>
+          <li>Détection de langue via IP; rien n'est stocké.</li>
+        </ul>
+        <h3>Conseils de téléchargement</h3>
+        <ul>
+          <li>Changelog clair et captures.</li>
+          <li>Installers compacts et signés.</li>
+          <li>Mini guide "premier lancement".</li>
+          <li>Portable + installer si possible.</li>
+          <li>Publier des hashes.</li>
+        </ul>
+      </section>
+
+      <section id="pt" class="section">
+        <h2>Português</h2>
+        <h3>Início rápido (passo a passo)</h3>
+        <ol>
+          <li>Escolha o idioma no primeiro ecrã.</li>
+          <li><strong>Breve</strong> para rapidez, <strong>Extenso</strong> para máximo desempenho.</li>
+          <li>(Opcional) Ative <strong>Software/IDEs</strong> e <strong>Ferramentas e linguagens</strong>.</li>
+          <li>Clique <strong>Executar diagnóstico</strong>.</li>
+          <li>Veja <strong>Sugestões de otimização</strong> e exporte TXT/PDF.</li>
+        </ol>
+        <h3>Fluxo (visual)</h3>
+        <pre>[Idioma] -> [Modo + Extras] -> [Diagnóstico] -> [Resultados + Sugestões] -> [Exportação]</pre>
+        <h3>O que a ferramenta verifica</h3>
+        <ul>
+          <li>OS, CPU, RAM, GPU, internet</li>
+          <li>Opcional: IDEs, ferramentas, linguagens</li>
+          <li>Opcional: rede e plano de energia (extenso)</li>
+        </ul>
+        <h3>Lógica das sugestões</h3>
+        <ul>
+          <li>Breve: pronto a trabalhar.</li>
+          <li>Extenso: performance máxima.</li>
+        </ul>
+        <h3>Exportar</h3>
+        <ul>
+          <li>TXT/PDF incluem resultados + sugestões.</li>
+        </ul>
+        <h3>Privacidade</h3>
+        <ul>
+          <li>Diagnóstico local.</li>
+          <li>Deteção de idioma via IP; nada é guardado.</li>
+        </ul>
+        <h3>Dicas de download</h3>
+        <ul>
+          <li>Changelog claro e screenshots.</li>
+          <li>Instaladores pequenos e assinados.</li>
+          <li>Guia curto "primeira execução".</li>
+          <li>Opções portable + installer.</li>
+          <li>Publicar hashes.</li>
+        </ul>
+      </section>
+
+      <section id="es" class="section">
+        <h2>Español</h2>
+        <h3>Inicio rápido (paso a paso)</h3>
+        <ol>
+          <li>Elige el idioma en la primera pantalla.</li>
+          <li><strong>Breve</strong> para empezar rápido, <strong>Extenso</strong> para máximo rendimiento.</li>
+          <li>(Opcional) Activa <strong>Software/IDEs</strong> y <strong>Herramientas e idiomas</strong>.</li>
+          <li>Haz clic en <strong>Ejecutar diagnóstico</strong>.</li>
+          <li>Revisa <strong>Sugerencias de optimización</strong> y exporta TXT/PDF.</li>
+        </ol>
+        <h3>Flujo (visual)</h3>
+        <pre>[Idioma] -> [Modo + Extras] -> [Diagnóstico] -> [Resultados + Sugerencias] -> [Exportar]</pre>
+        <h3>Qué comprueba la herramienta</h3>
+        <ul>
+          <li>OS, CPU, RAM, GPU, internet</li>
+          <li>Opcional: IDEs, herramientas, idiomas</li>
+          <li>Opcional: red y plan de energía (extenso)</li>
+        </ul>
+        <h3>Lógica de sugerencias</h3>
+        <ul>
+          <li>Breve: listo para trabajar.</li>
+          <li>Extenso: máximo rendimiento.</li>
+        </ul>
+        <h3>Exportar</h3>
+        <ul>
+          <li>TXT/PDF incluyen resultados + sugerencias.</li>
+        </ul>
+        <h3>Privacidad</h3>
+        <ul>
+          <li>Diagnósticos locales.</li>
+          <li>Detección de idioma vía IP; no se guarda nada.</li>
+        </ul>
+        <h3>Consejos de descarga</h3>
+        <ul>
+          <li>Changelog claro y capturas.</li>
+          <li>Instaladores pequeños y firmados.</li>
+          <li>Guía breve de "primer uso".</li>
+          <li>Opciones portable + installer.</li>
+          <li>Publicar hashes.</li>
+        </ul>
+      </section>
+
+      <section id="it" class="section">
+        <h2>Italiano</h2>
+        <h3>Avvio rapido (passo per passo)</h3>
+        <ol>
+          <li>Scegli la lingua nella prima schermata.</li>
+          <li><strong>Breve</strong> per partire subito, <strong>Estesa</strong> per massimo rendimento.</li>
+          <li>(Opzionale) Attiva <strong>Software/IDE</strong> e <strong>Strumenti e linguaggi</strong>.</li>
+          <li>Clicca <strong>Esegui diagnostica</strong>.</li>
+          <li>Consulta <strong>Suggerimenti di ottimizzazione</strong> ed esporta TXT/PDF.</li>
+        </ol>
+        <h3>Flusso (visivo)</h3>
+        <pre>[Lingua] -> [Modalità + Extra] -> [Diagnostica] -> [Risultati + Suggerimenti] -> [Export]</pre>
+        <h3>Cosa controlla lo strumento</h3>
+        <ul>
+          <li>OS, CPU, RAM, GPU, internet</li>
+          <li>Opzionale: IDE, strumenti, linguaggi</li>
+          <li>Opzionale: rete e piano energia (esteso)</li>
+        </ul>
+        <h3>Logica suggerimenti</h3>
+        <ul>
+          <li>Breve: pronto a iniziare.</li>
+          <li>Estesa: massimo rendimento.</li>
+        </ul>
+        <h3>Export</h3>
+        <ul>
+          <li>TXT/PDF includono risultati + suggerimenti.</li>
+        </ul>
+        <h3>Privacy</h3>
+        <ul>
+          <li>Diagnostica locale.</li>
+          <li>Rilevamento lingua via IP; nulla viene salvato.</li>
+        </ul>
+        <h3>Consigli download</h3>
+        <ul>
+          <li>Changelog chiaro e screenshot.</li>
+          <li>Installer piccoli e firmati.</li>
+          <li>Guida breve "primo avvio".</li>
+          <li>Opzioni portable + installer.</li>
+          <li>Pubblica hash.</li>
+        </ul>
+      </section>
+
+      <section id="id" class="section">
+        <h2>Bahasa Indonesia</h2>
+        <h3>Mulai cepat (langkah demi langkah)</h3>
+        <ol>
+          <li>Pilih bahasa di layar pertama.</li>
+          <li><strong>Singkat</strong> untuk mulai cepat, <strong>Lengkap</strong> untuk performa maksimum.</li>
+          <li>(Opsional) Aktifkan <strong>Software/IDE</strong> dan <strong>Alat & bahasa</strong>.</li>
+          <li>Klik <strong>Jalankan diagnostik</strong>.</li>
+          <li>Lihat <strong>Saran optimasi</strong> dan ekspor TXT/PDF.</li>
+        </ol>
+        <h3>Alur (visual)</h3>
+        <pre>[Bahasa] -> [Mode + Ekstra] -> [Diagnostik] -> [Hasil + Saran] -> [Ekspor]</pre>
+        <h3>Apa yang diperiksa</h3>
+        <ul>
+          <li>OS, CPU, RAM, GPU, internet</li>
+          <li>Opsional: IDE, alat, bahasa</li>
+          <li>Opsional: jaringan dan power plan (lengkap)</li>
+        </ul>
+        <h3>Logika saran</h3>
+        <ul>
+          <li>Singkat: siap mulai kerja.</li>
+          <li>Lengkap: performa maksimum.</li>
+        </ul>
+        <h3>Ekspor</h3>
+        <ul>
+          <li>TXT/PDF berisi hasil + saran.</li>
+        </ul>
+        <h3>Privasi</h3>
+        <ul>
+          <li>Diagnostik lokal.</li>
+          <li>Deteksi bahasa via IP; tidak disimpan.</li>
+        </ul>
+        <h3>Tips unduhan</h3>
+        <ul>
+          <li>Changelog jelas dan screenshot.</li>
+          <li>Installer kecil dan ditandatangani.</li>
+          <li>Panduan "first run" singkat.</li>
+          <li>Opsi portable + installer.</li>
+          <li>Publikasikan hash.</li>
+        </ul>
+      </section>
+    </div>
+  </body>
+</html>

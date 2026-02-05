@@ -1,38 +1,39 @@
 {
-    "name": "local_resource_diagnostic_tool",
-    "version": "1.0.4",
-    "description": "Local system diagnostics app (Windows + macOS) with privacy controls.",
-    "main": "main.js",
-    "scripts": {
-        "start": "electron .",
-        "pack": "node scripts/generate-icons.js && electron-builder --dir",
-        "build": "node scripts/generate-icons.js && electron-builder",
-        "smoke": "node scripts/smoke-test.js"
+  "name": "developer_diagnostics_kit",
+  "version": "1.0.5",
+  "description": "Developer diagnostics app (Windows + macOS) with privacy controls.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "node scripts/generate-icons.js && electron-builder --dir",
+    "build": "node scripts/generate-icons.js && electron-builder",
+    "smoke": "node scripts/smoke-test.js",
+    "docs:pdf": "electron scripts/generate-explained-pdf.js"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3",
+    "png-to-ico": "^2.1.0"
+  },
+  "productName": "Developer Diagnostics Kit",
+  "build": {
+    "directories": {
+      "buildResources": "assets",
+      "output": "dist"
     },
-    "devDependencies": {
-        "electron": "^28.3.3",
-        "electron-builder": "^24.13.3",
-        "png-to-ico": "^2.1.0"
+    "files": [
+      "**/*",
+      "!dist/**"
+    ],
+    "productName": "Developer Diagnostics Kit",
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon-mac.icns"
     },
-    "productName": "Local Resource Diagnostic Tool",
-    "build": {
-        "directories": {
-            "buildResources": "assets",
-            "output": "dist"
-        },
-        "files": [
-            "**/*",
-            "!dist/**"
-        ],
-        "productName": "Local Resource Diagnostic Tool",
-        "mac": {
-            "target": "dmg",
-            "icon": "assets/icon-mac.icns"
-        },
-        "win": {
-            "target": "nsis",
-            "icon": "assets/icon-win.ico"
-        },
-        "appId": "com.joostbosman.localresourcediagnostictool"
-    }
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon-win.ico"
+    },
+    "appId": "com.joostbosman.developerdiagnosticskit"
+  }
 }

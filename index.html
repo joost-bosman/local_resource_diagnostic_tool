@@ -3,89 +3,146 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Local Resource Diagnostic Tool</title>
+    <title>Developer Diagnostics Kit</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="app">
       <header class="app-header">
         <div class="title-wrap">
-          <img src="assets/icon-win.png" alt="App icon" class="app-icon" />
+          <div class="icon-stack">
+            <img src="assets/icon-win.png" alt="App icon" class="app-icon" />
+            <span class="cloud-badge" aria-hidden="true">
+              <svg viewBox="0 0 64 40" role="img" focusable="false">
+                <path d="M20 32h26a10 10 0 0 0 0-20 13 13 0 0 0-25-4A9 9 0 0 0 20 32z" />
+              </svg>
+            </span>
+          </div>
           <div>
-            <h1>Local Resource Diagnostic Tool</h1>
+            <h1 data-i18n="app.title">Developer Diagnostics Kit</h1>
           </div>
         </div>
-        <div class="badge" id="platformBadge">Windows + macOS</div>
+        <div class="badge" id="platformBadge" data-i18n="app.badge">Windows + macOS</div>
       </header>
+
+      <section class="screen screen-language hidden" id="screenLanguage">
+        <div class="card language-card">
+          <h2 data-i18n="language.title">Choose language</h2>
+          <p class="setup-note" data-i18n="language.subtitle">We can auto-detect based on your region.</p>
+          <div class="language-actions">
+            <button id="detectLanguageBtn" class="secondary" data-i18n="language.auto">Auto-detect language</button>
+          </div>
+          <p class="setup-note" data-i18n="language.manual">Or select manually</p>
+          <div class="language-list">
+            <label class="radio">
+              <input type="radio" name="language" value="en-GB" checked />
+              <span data-i18n="language.label.enGB">English (UK)</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="language" value="nl" />
+              <span data-i18n="language.label.nl">Nederlands</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="language" value="hi" />
+              <span data-i18n="language.label.hi">हिन्दी</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="language" value="ar" />
+              <span data-i18n="language.label.ar">العربية</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="language" value="pl" />
+              <span data-i18n="language.label.pl">Polski</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="language" value="uk" />
+              <span data-i18n="language.label.uk">Українська</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="language" value="fr" />
+              <span data-i18n="language.label.fr">Français</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="language" value="pt" />
+              <span data-i18n="language.label.pt">Português</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="language" value="es" />
+              <span data-i18n="language.label.es">Español</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="language" value="it" />
+              <span data-i18n="language.label.it">Italiano</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="language" value="id" />
+              <span data-i18n="language.label.id">Bahasa Indonesia</span>
+            </label>
+          </div>
+          <div class="action-row">
+            <button id="languageContinue" class="primary" data-i18n="language.continue">Continue</button>
+          </div>
+          <div id="languageStatus" class="status" data-i18n="language.status.idle">Waiting.</div>
+        </div>
+      </section>
 
       <section class="screen screen-start" id="screenStart">
         <div class="controls">
           <div class="card setup" id="setupCard">
-            <h2>Setup</h2>
-            <p class="setup-note">
+            <h2 data-i18n="setup.title">Setup</h2>
+            <p class="setup-note" data-i18n="setup.note">
               Installs the dev dependencies from the project and starts the dev app.
               This is needed only if you run from source.
             </p>
             <ul class="setup-list">
-              <li>Will run: <code>npm install</code></li>
-              <li>Will run: <code>npm start</code></li>
+              <li><span data-i18n="setup.list.install">Will run: npm install</span></li>
+              <li><span data-i18n="setup.list.start">Will run: npm start</span></li>
             </ul>
             <div class="setup-actions">
-              <button id="setupInstall" class="secondary">Install dependencies</button>
-              <button id="setupStart" class="secondary">Start app</button>
+              <button id="setupInstall" class="secondary" data-i18n="setup.install">Install dependencies</button>
+              <button id="setupStart" class="secondary" data-i18n="setup.start">Start app</button>
             </div>
-            <div id="setupStatus" class="status">Waiting.</div>
+            <div id="setupStatus" class="status" data-i18n="setup.status.waiting">Waiting.</div>
           </div>
           <div class="card">
-            <h2>Privacy</h2>
+            <h2 data-i18n="mode.title">Test mode</h2>
             <label class="radio">
-              <input type="radio" name="privacy" value="private" checked />
-              <span>Private (show all info)</span>
+              <input type="radio" name="approach" value="brief" checked />
+              <span data-i18n="mode.brief">Brief</span>
             </label>
             <label class="radio">
-              <input type="radio" name="privacy" value="public" />
-              <span>Public (redact personal data)</span>
+              <input type="radio" name="approach" value="extensive" />
+              <span data-i18n="mode.extensive">Extensive</span>
             </label>
           </div>
-          <div class="card">
-            <h2>Mode</h2>
-            <label class="radio">
-              <input type="radio" name="mode" value="quick" checked />
-              <span>Quick diagnostics</span>
-            </label>
-          <label class="radio">
-            <input type="radio" name="mode" value="full" />
-            <span>Full diagnostics</span>
-          </label>
-        </div>
         <div class="card">
-          <h2>Extras</h2>
+          <h2 data-i18n="extras.title">Extras</h2>
           <label class="radio">
             <input type="checkbox" name="extraSoftware" checked />
-            <span>Software/IDEs</span>
+            <span data-i18n="extras.software">Software/IDEs</span>
           </label>
           <label class="radio">
             <input type="checkbox" name="extraDependencies" checked />
-            <span>Tools & Languages</span>
+            <span data-i18n="extras.dependencies">Tools & Languages</span>
           </label>
           <label class="radio">
             <input type="checkbox" name="extraOptimization" checked />
-            <span>Include optimization checks</span>
+            <span data-i18n="extras.optimization">Include optimization checks</span>
           </label>
         </div>
         </div>
         <section class="run-block">
           <div class="card actions">
-            <button id="runBtn" class="primary">Run diagnostics</button>
-            <div id="status" class="status">Ready.</div>
+            <button id="runBtn" class="primary" data-i18n="actions.run">Run diagnostics</button>
+            <div id="status" class="status" data-i18n="status.ready">Ready.</div>
           </div>
         </section>
       </section>
 
       <section class="screen screen-progress hidden" id="screenProgress">
         <div class="card">
-          <h2>Running diagnostics...</h2>
-          <p id="progressText" class="setup-note">Preparing checks.</p>
+          <h2 data-i18n="progress.title">Running diagnostics...</h2>
+          <p id="progressText" class="setup-note" data-i18n="progress.preparing">Preparing checks.</p>
           <div class="progress-bar">
             <div class="progress-bar-fill" id="progressFill"></div>
           </div>
@@ -95,37 +152,40 @@
       <section class="screen screen-results hidden" id="screenResults">
         <section class="run-block">
           <div class="card actions">
-            <button class="primary" disabled>The results Arrr...</button>
+            <button class="primary" disabled data-i18n="results.button">Results</button>
           </div>
         </section>
 
         <section class="results">
           <div class="results-header">
-            <h2>Results</h2>
+            <h2 data-i18n="results.title">Results</h2>
           </div>
-          <pre id="results">Run diagnostics to see results.</pre>
+          <pre id="results" data-i18n="results.placeholder">Run diagnostics to see results.</pre>
         </section>
 
         <section class="run-block">
           <div class="card actions">
-            <h2>Export results</h2>
-            <button id="exportBtn" class="secondary" disabled>Export results</button>
-            <div id="resultsStatus" class="status">Ready.</div>
+            <h2 data-i18n="export.title">Export results</h2>
+            <div class="action-row">
+              <button id="exportBtn" class="secondary" disabled data-i18n="export.button">Export results</button>
+              <button id="previousBtn" class="ghost" data-i18n="export.previous">Previous</button>
+            </div>
+            <div id="resultsStatus" class="status" data-i18n="results.status.ready">Ready.</div>
           </div>
         </section>
 
         <section class="suggestions">
           <div class="results-header">
-            <h2>Optimization suggestions</h2>
+            <h2 data-i18n="suggestions.title">Optimization suggestions</h2>
           </div>
           <ul id="suggestionsList">
-            <li>Run diagnostics to see suggestions.</li>
+            <li data-i18n="suggestions.placeholder">Run diagnostics to see suggestions.</li>
           </ul>
         </section>
 
         <section class="run-block">
           <div class="card actions">
-            <button id="closeApp" class="ghost">Close application</button>
+            <button id="closeApp" class="ghost" data-i18n="actions.close">Close application</button>
           </div>
         </section>
       </section>
@@ -133,12 +193,12 @@
 
     <div id="modal" class="modal hidden">
       <div class="modal-content">
-        <h3>Export results</h3>
-        <p>Choose a format:</p>
+        <h3 data-i18n="modal.title">Export results</h3>
+        <p data-i18n="modal.subtitle">Choose a format:</p>
         <div class="modal-actions">
           <button id="exportTxt" class="secondary">TXT</button>
           <button id="exportPdf" class="secondary">PDF</button>
-          <button id="cancelExport" class="ghost">Cancel</button>
+          <button id="cancelExport" class="ghost" data-i18n="modal.cancel">Cancel</button>
         </div>
       </div>
     </div>
