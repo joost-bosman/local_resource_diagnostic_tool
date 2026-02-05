@@ -1,4 +1,4 @@
-﻿# Developer Diagnostics Kit - Explained
+# Multilingual Diagnostics Tool - Explained
 
 ## Table of Contents / Inhoudsopgave
 - English (UK)
@@ -450,3 +450,4 @@
 - Panduan "first run" singkat.
 - Opsi portable + installer.
 - Publikasikan hash.
+

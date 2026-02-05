@@ -1,9 +1,8 @@
-# Developer Diagnostics Kit
+# Multilingual Diagnostics Tool
 
 ![Build](https://github.com/joost-bosman/developer_diagnostics_kit/actions/workflows/build-release.yml/badge.svg)
 
-Windows + macOS diagnostics kit for quick checks of hardware, software, and internet versions/settings.
-Based on the results, it provides suggestions to enhance PC/laptop experience and improve performance for developers.
+Multilingual diagnostics tool for Windows and macOS. Run quick hardware, software, and internet checks, then get focused suggestions to boost developer performance.
 
 ## Download
 - Latest releases: https://github.com/joost-bosman/developer_diagnostics_kit/releases
@@ -73,4 +72,5 @@ Docs:
 
 ## Credits
 See `CREDITS.md`.
+
 
