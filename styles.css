@@ -40,7 +40,7 @@ body.rtl .radio {
 
 .app {
   padding: 6px 32px 20px;
-  max-width: 1100px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
@@ -112,7 +112,7 @@ body.rtl .radio {
 
 .controls {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
   margin-bottom: 12px;
 }
@@ -123,8 +123,13 @@ body.rtl .radio {
 }
 
 .screen {
-  display: block;
-}
+    display: block;
+  }
+
+  .screen-language {
+    user-select: none;
+    -webkit-user-select: none;
+  }
 
 .screen.hidden {
   display: none;
@@ -139,20 +144,34 @@ body.rtl .radio {
 }
 
 .language-card {
-  max-width: 520px;
-  margin: 20px auto 0;
-}
+    max-width: calc(520px + 3cm);
+    margin: 20px auto 0;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+.language-card.scaled {
+    transform-origin: top center;
+  }
 
 .language-actions {
   margin-bottom: 12px;
 }
 
 .language-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 6px 12px;
-  margin-bottom: 16px;
-}
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 6px 12px;
+    margin-bottom: 16px;
+    max-height: 280px;
+    overflow: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
+  }
+
+  .language-list .radio span {
+    white-space: normal;
+  }
 
 .card h2 {
   margin: 0 0 12px;
@@ -169,6 +188,23 @@ body.rtl .radio {
 
 .radio input {
   accent-color: var(--accent);
+}
+
+.select-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.language-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
 }
 
 .actions {

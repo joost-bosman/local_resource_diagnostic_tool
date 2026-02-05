@@ -1,11 +1,22 @@
 # Multilingual Developer Diagnostics Tool
 
-![Build](https://github.com/joost-bosman/developer_diagnostics_kit/actions/workflows/build-release.yml/badge.svg)
+![Build](https://img.shields.io/github/actions/workflow/status/joost-bosman/Multilingual_Developer_Diagnostics_Tool/build-release.yml?label=build)
 
-Multilingual Developer Diagnostics Tool for Windows and macOS. Run quick hardware, software, and internet checks, then get focused suggestions to boost developer performance.
+Multilingual Developer Diagnostics Tool for Windows and macOS.
+
+This is the tool you reach for when you want to feel confident about the current state of your setup. Run it and you will see what is strong, what is missing, and what is holding you back across hardware, software, IDE, language(s), and Wi-Fi/LAN. Then comes the best part: it turns that insight into clear, practical suggestions, plus an exportable checklist so you can improve step by step.
+
+Main goal: maximize your current setup and create that smooth, fast, "yes! yes!" feeling when you start coding and developing.
+
+Good luck! Cheers!
 
 ## Download
-- Latest releases: https://github.com/joost-bosman/developer_diagnostics_kit/releases
+- Latest releases: https://github.com/joost-bosman/Multilingual_Developer_Diagnostics_Tool/releases
+
+## Documentation
+- Explained guide: `docs/EXPLAINED.md`
+- Supported languages: `docs/LANGUAGES.md`
+- PDF export: `npm run docs:pdf` -> `docs/EXPLAINED.pdf`
 
 <table>
   <tr>
@@ -20,33 +31,30 @@ Multilingual Developer Diagnostics Tool for Windows and macOS. Run quick hardwar
 </table>
 
 ## Features
-- Quick or full diagnostics
-  - Tests: OS info, CPU, GPU, memory, internet latency.
-  - The tool automatically checks CLI tool builds (when detected).
-- Optimization checks
-  - Hardware (always)
-  - Software (only when selected)
-- Multi-language UI
-  - Language selection on first launch
-  - Auto-detect by region with English (UK) fallback
-- Test mode
-  - Brief  
-    Short testing, quick overview of components, plus focused suggestions for weak spots and dependencies.
-  - Extensive  
-    Deep testing with more detailed results and broader suggestions to maximize hardware/software performance.
-- Output results
-  - Format: TXT or PDF
-  - Timestamped filenames: `results_diagnostic_DDMMYY`
-  - Optimization suggestions included
-  - When the OS/driver can't provide it, may show "n/a".
+- Pick your depth: quick scan for readiness or full scan for maximum performance.
+  - Checks OS, CPU, GPU, memory, and internet latency.
+  - Automatically verifies detected CLI tools and builds.
+- Optimization that feels practical.
+  - Hardware checks are always on.
+  - Software checks run only when you opt in.
+- Multilingual by default.
+  - Choose a language on first launch.
+  - Auto-detect by region with English (UK) fallback.
+- Results you can act on.
+  - Brief mode: a fast overview plus focused fixes for weak spots and missing dependencies.
+  - Extensive mode: deeper detail and broader tuning suggestions.
+  - Export to TXT or PDF with timestamped filenames: `results_diagnostic_DDMMYY`.
+  - Shows "n/a" when the OS/driver cannot provide a value.
 
 ## Quick start
+Get moving in two commands:
 ```bash
 npm install
 npm start
 ```
 
 ## Build installers
+Build the installer packages:
 ```bash
 npm run pack
 npm run build
@@ -56,19 +64,13 @@ macOS helper:
 - `./mac_diagtool_program_builder.sh`
 - Note: I made an auto builder for macOS, but I could not build it myself.
 
-Docs:
-- Explained guide: `docs/EXPLAINED.md`
-- PDF export: `npm run docs:pdf` -> `docs/EXPLAINED.pdf`
-
 ## Where the executables are
 - Output folders:
   - Windows: `dist/windows/`
   - macOS: `dist/macos/`
 - Windows installer: `*.exe` (NSIS)
 - macOS installer: `*.dmg`
-- macOS builds are best done on macOS (I don't have a Mac).
-- Tests run before push; releases are on GitHub.
-- The mac helper script generates `assets/icon-mac.icns` from `assets/icon-mac.png` before building.
+The mac helper script generates `assets/icon-mac.icns` from `assets/icon-mac.png` before building.
 
 ## Credits
 See `CREDITS.md`.

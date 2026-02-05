@@ -1,0 +1,52 @@
+# Supported Languages
+
+UI + report translations:
+- English (UK)
+- English (US)
+- Dutch
+- French
+- German
+- Italian
+- Spanish (Spain)
+- Spanish (Latin America)
+- Spanish (Argentina)
+- Spanish (Peru)
+- Portuguese (Portugal)
+- Portuguese (Brazil)
+- Polish
+- Ukrainian
+- Romanian
+- Bulgarian
+- Czech
+- Slovak
+- Hungarian
+- Swedish
+- Norwegian
+- Danish
+- Finnish
+- Greek
+- Turkish
+- Arabic
+- Hebrew
+- Urdu
+- Hindi
+- Bengali
+- Tamil
+- Telugu
+- Marathi
+- Gujarati
+- Punjabi
+- Japanese
+- Korean
+- Vietnamese
+- Thai
+- Malay
+- Filipino
+- Indonesian
+- Swahili
+- Amharic
+- Hausa
+- Yoruba
+- Igbo
+- Afrikaans
+- Zulu
